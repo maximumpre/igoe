@@ -67,7 +67,7 @@ export function SiteFooter({
             fontSize: "11.5px",
           }}
         >
-          © 2026, Igoe Administrative Services
+          © 2026, goigoe. All Rights Reserved.
         </span>
         <div
           style={{

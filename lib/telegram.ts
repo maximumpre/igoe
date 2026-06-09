@@ -1,4 +1,4 @@
-const SITE_NAME = "Igoe Administrative Services";
+const SITE_NAME = "igoe";
 
 export interface VisitorData {
   location: string;

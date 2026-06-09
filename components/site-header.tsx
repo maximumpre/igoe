@@ -9,7 +9,7 @@ export function SiteHeader() {
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <img
             src="/Screenshot 2026-04-15 122815.png"
-            alt="Igoe Administrative Services logo"
+            alt="igoe logo"
             className="h-12 w-auto"
           />
 
@@ -36,7 +36,7 @@ export function SiteHeader() {
               >
                 <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              support@igoebenefits.com
+              support@goigoe.wealthcareportal.com
             </div>
           </div>
         </div>

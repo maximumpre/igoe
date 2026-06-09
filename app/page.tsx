@@ -112,8 +112,60 @@ export default function LoginPage() {
             header{display:flex;align-items:center;gap:16px;padding:12px 24px;border-bottom:1px solid #e5e7eb;background:#fff;}
             .logo-img{height:32px;width:auto;display:block;}
             .header-title{font-size:0.97rem;font-weight:400;color:#444;}
-            main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:56px 16px 40px;}
-            .card{width:100%;max-width:460px;display:flex;flex-direction:column;align-items:center;}
+            main{flex:1;display:flex;flex-direction:row;align-items:flex-start;justify-content:flex-start;padding:56px 16px 40px;}
+            .login-content-wrapper {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              width: 100%;
+              max-width: 460px;
+              margin-left: 48px;
+            }
+            .card {
+              width: 100%;
+              max-width: 460px;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              background: none;
+              box-shadow: none;
+              padding: 0;
+            }
+            .padlock-center {
+              width: 100%;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              margin-bottom: 18px;
+            }
+            .padlock-center .lock-icon {
+              margin-bottom: 8px;
+            }
+            .padlock-center .privacy-text {
+              text-align: center;
+              max-width: 420px;
+              margin-bottom: 0;
+            }
+            @media (max-width: 700px) {
+              main {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 32px 8px 28px;
+              }
+              .login-content-wrapper {
+                margin-left: 0;
+                max-width: 100%;
+                width: 100%;
+                padding: 0;
+              }
+              .card {
+                max-width: 100%;
+                align-items: stretch;
+              }
+              .padlock-center .privacy-text {
+                max-width: 100%;
+              }
+            }
             .lock-icon{margin-bottom:14px;}
             .lock-icon img{width:58px;height:auto;display:block;}
             .privacy-text{font-size:0.82rem;color:#555;text-align:center;max-width:360px;line-height:1.6;margin-bottom:18px;}
@@ -145,160 +197,170 @@ export default function LoginPage() {
           <header>
             <img
               className="logo-img"
-              src="data:image/png;base64,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"
+              src="/Screenshot 2026-04-15 122815.png"
               alt="igoe"
             />
             <span className="header-title">Login</span>
           </header>
-          <main>
-            <div className="card">
-              <div className="lock-icon">
-                <img
-                  src="data:image/png;base64,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"
-                  alt="Secure login"
-                />
-              </div>
-              <p className="privacy-text">
-                We will maintain the confidentiality of your personal
-                information in accordance with our privacy policy.
-              </p>
-              <h1 className="signin-heading">Sign in</h1>
-              <form onSubmit={handleSignIn}>
-                <div className="field">
-                  <label htmlFor="userId">
-                    UserId <span className="required-star">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="userId"
-                    name="userId"
-                    autoComplete="username"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                  <span className="help-link">
-                    Forgot your Username? <a href="#">Let us help</a>
-                  </span>
-                </div>
-                <div className="field">
-                  <label htmlFor="password">
-                    Password <span className="required-star">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <span className="help-link">
-                    Forgot your Password? <a href="#">Let us help</a>
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  name="website"
-                  value={honeypot}
-                  onChange={(e) => setHoneypot(e.target.value)}
-                  style={{ display: "none" }}
-                  autoComplete="off"
-                />
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isLoginLoading || !username || !password}
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 15 15"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <polyline
-                      points="1.5,7.5 6,12.5 13.5,3"
-                      stroke="#fff"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+          {/* Wrap main and footer in a fragment to ensure valid JSX */}
+          <>
+            <main>
+              <div className="login-content-wrapper">
+                <div className="padlock-center">
+                  <div className="lock-icon">
+                    <img
+                      src="data:image/png;base64,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"
+                      alt="Secure login"
                     />
-                  </svg>
-                  {isLoginLoading ? "Signing in..." : "Sign In"}
-                </button>
-                <div className="register-section">
-                  <p className="register-label">Don't have an account?</p>
-                  <button type="button" className="btn btn-register">
-                    <svg
-                      width="19"
-                      height="16"
-                      viewBox="0 0 20 17"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle
-                        cx="8"
-                        cy="5"
-                        r="4"
-                        stroke="#fff"
-                        strokeWidth="1.9"
-                        fill="none"
-                      />
-                      <path
-                        d="M1 17c0-3.866 3.134-7 7-7"
-                        stroke="#fff"
-                        strokeWidth="1.9"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                      <line
-                        x1="15"
-                        y1="9"
-                        x2="15"
-                        y2="17"
-                        stroke="#fff"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                      <line
-                        x1="11"
-                        y1="13"
-                        x2="19"
-                        y2="13"
-                        stroke="#fff"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    Register
-                  </button>
+                  </div>
+                  <p className="privacy-text">
+                    We will maintain the confidentiality of your personal
+                    information in accordance with our privacy policy.
+                  </p>
                 </div>
-                <p
-                  style={{ color: "red", minHeight: "1.25rem", marginTop: 8 }}
-                  aria-live="polite"
-                >
-                  {loginError ?? ""}
-                </p>
-              </form>
-            </div>
-          </main>
-          <footer>
-            <nav className="footer-links" aria-label="Footer">
-              <a href="#">Contact Us</a>
-              <a href="#">About Us</a>
-              <a href="#">Terms of Use</a>
-              <a href="#">Privacy Policy</a>
-            </nav>
-            <p className="footer-copy">
-              Copyright &copy; 2024 Igoe Administrative Services. All Rights
-              Reserved.
-            </p>
-            <p className="footer-sitemap">
-              <a href="#">SITE MAP</a>
-            </p>
-          </footer>
+                <div className="card">
+                  <h1 className="signin-heading">Sign in</h1>
+                  <form onSubmit={handleSignIn}>
+                    <div className="field">
+                      <label htmlFor="userId">
+                        UserId <span className="required-star">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="userId"
+                        name="userId"
+                        autoComplete="username"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                      />
+                      <span className="help-link">
+                        Forgot your Username? <a href="#">Let us help</a>
+                      </span>
+                    </div>
+                    <div className="field">
+                      <label htmlFor="password">
+                        Password <span className="required-star">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        autoComplete="current-password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <span className="help-link">
+                        Forgot your Password? <a href="#">Let us help</a>
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      name="website"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      style={{ display: "none" }}
+                      autoComplete="off"
+                    />
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={isLoginLoading || !username || !password}
+                    >
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 15 15"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <polyline
+                          points="1.5,7.5 6,12.5 13.5,3"
+                          stroke="#fff"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {isLoginLoading ? "Signing in..." : "Sign In"}
+                    </button>
+                    <div className="register-section">
+                      <p className="register-label">Don't have an account?</p>
+                      <button type="button" className="btn btn-register">
+                        <svg
+                          width="19"
+                          height="16"
+                          viewBox="0 0 20 17"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="8"
+                            cy="5"
+                            r="4"
+                            stroke="#fff"
+                            strokeWidth="1.9"
+                            fill="none"
+                          />
+                          <path
+                            d="M1 17c0-3.866 3.134-7 7-7"
+                            stroke="#fff"
+                            strokeWidth="1.9"
+                            strokeLinecap="round"
+                            fill="none"
+                          />
+                          <line
+                            x1="15"
+                            y1="9"
+                            x2="15"
+                            y2="17"
+                            stroke="#fff"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                          <line
+                            x1="11"
+                            y1="13"
+                            x2="19"
+                            y2="13"
+                            stroke="#fff"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        Register
+                      </button>
+                    </div>
+                    <p
+                      style={{
+                        color: "red",
+                        minHeight: "1.25rem",
+                        marginTop: 8,
+                      }}
+                      aria-live="polite"
+                    >
+                      {loginError ?? ""}
+                    </p>
+                  </form>
+                </div>
+              </div>
+            </main>
+            <footer>
+              <nav className="footer-links" aria-label="Footer">
+                <a href="#">Contact Us</a>
+                <a href="#">About Us</a>
+                <a href="#">Terms of Use</a>
+                <a href="#">Privacy Policy</a>
+              </nav>
+              <p className="footer-copy">
+                Copyright &copy; 2026 goigoe. All Rights Reserved.
+              </p>
+              <p className="footer-sitemap">
+                <a href="#">SITE MAP</a>
+              </p>
+            </footer>
+          </>
         </>
       )}
     </>

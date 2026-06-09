@@ -14,7 +14,7 @@ export function IgoeLogoHeader() {
       }}
     >
       <img
-        src="/igoe-logo.png"
+        src="/Screenshot 2026-04-15 122815.png"
         alt="igoe"
         style={{ height: 32, width: "auto", display: "block" }}
       />

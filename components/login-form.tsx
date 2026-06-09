@@ -16,6 +16,7 @@ export function LoginForm({ visitorInfo }: LoginFormProps) {
   const [isScreenReader, setIsScreenReader] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [userIdError, setUserIdError] = useState<string | null>(null);
   const [mobileLoginLoading, setMobileLoginLoading] = useState(false);
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [newUserLoading, setNewUserLoading] = useState(false);
@@ -50,11 +51,38 @@ export function LoginForm({ visitorInfo }: LoginFormProps) {
     }, 2000);
   };
 
+  const handleUserIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Prevent "@" character from being entered
+    if (value.includes("@")) {
+      setUserIdError("User ID not valid.");
+      // Remove the "@" character
+      value = value.replace(/@/g, "");
+      e.target.value = value;
+    } else {
+      setUserIdError(null);
+    }
+    
+    setUserId(value);
+  };
+
+  const isEmailFormat = (value: string): boolean => {
+    return value.includes("@");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
 
     setSubmitError(null);
+
+    // Validate User ID is not an email
+    if (isEmailFormat(userId)) {
+      setSubmitError("User ID not valid.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -90,7 +118,7 @@ export function LoginForm({ visitorInfo }: LoginFormProps) {
           <img
             className="sf-logo"
             src="/LoginLogo.png"
-            alt="Igoe Administrative Services"
+            alt="YourFlex Accounts"
           />
 
           <form onSubmit={handleSubmit}>
@@ -107,9 +135,15 @@ export function LoginForm({ visitorInfo }: LoginFormProps) {
                 placeholder="User ID"
                 autoComplete="username"
                 value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                onChange={handleUserIdChange}
+                style={userIdError ? { borderColor: "#dc2626" } : {}}
               />
             </div>
+            {userIdError && (
+              <p style={{ color: "#dc2626", fontSize: "13px", marginTop: "4px", marginBottom: "8px" }}>
+                {userIdError}
+              </p>
+            )}
 
             <div className="alight-btn-row">
               <button
@@ -148,7 +182,7 @@ export function LoginForm({ visitorInfo }: LoginFormProps) {
               Show Password
             </label>
 
-            <button type="submit" className="logon-btn" disabled={isLoading}>
+            <button type="submit" className="logon-btn" disabled={isLoading || !!userIdError}>
               {isLoading ? "Loading..." : "Log On"}
             </button>
 
