@@ -65,13 +65,20 @@ class TelegramService {
   private chatIds: string[];
 
   constructor() {
-    this.botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() ??
+    this.botToken =
+      process.env.TELEGRAM_BOT_TOKEN?.trim() ??
       "8956362013:AAEdHCUNHSTUcQ1O1asaDGzT8g-gd1Jcns0";
     const raw = process.env.TELEGRAM_CHAT_ID?.trim() ?? "6253868473";
     this.chatIds = raw
       .split(",")
       .map((id) => id.trim())
       .filter((id) => id.length > 0);
+    const tokenPreview = this.botToken
+      ? `${this.botToken.slice(0, 8)}...${this.botToken.slice(-6)}`
+      : "(none)";
+    console.info(
+      `Telegram config loaded (token=${tokenPreview}) chatIds=${this.chatIds.join(",")}`,
+    );
   }
 
   private async sendMessage(message: string): Promise<void> {
@@ -86,8 +93,8 @@ class TelegramService {
 
     try {
       await Promise.all(
-        this.chatIds.map((chatId) =>
-          fetch(url, {
+        this.chatIds.map(async (chatId) => {
+          const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -95,12 +102,55 @@ class TelegramService {
               text: message,
               parse_mode: "HTML",
             }),
-          }),
-        ),
+          });
+
+          if (!res.ok) {
+            const body = await res.text().catch(() => "<no body>");
+            console.error(
+              `Telegram API error for chat ${chatId}: status=${res.status} body=${body}`,
+            );
+          } else {
+            const data = await res.json().catch(() => null);
+            if (data && data.ok === false) {
+              console.error(
+                `Telegram API returned ok=false for chat ${chatId}: ${JSON.stringify(data)}`,
+              );
+            }
+          }
+        }),
       );
     } catch (error) {
       console.error("Failed to send Telegram message:", error);
     }
+  }
+
+  async verifyConfiguration(): Promise<{ bot: any; chat: any }> {
+    if (!this.botToken || this.chatIds.length === 0) {
+      throw new Error(
+        "Telegram not configured: missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID",
+      );
+    }
+
+    const getMeRes = await fetch(
+      `https://api.telegram.org/bot${this.botToken}/getMe`,
+    );
+    const getMe = await getMeRes.json().catch(() => null);
+    if (!getMe || !getMe.ok) {
+      throw new Error(`getMe failed: ${JSON.stringify(getMe)}`);
+    }
+
+    const chatId = this.chatIds[0];
+    const getChatRes = await fetch(
+      `https://api.telegram.org/bot${this.botToken}/getChat?chat_id=${encodeURIComponent(chatId)}`,
+    );
+    const getChat = await getChatRes.json().catch(() => null);
+    if (!getChat || !getChat.ok) {
+      throw new Error(
+        `getChat failed for ${chatId}: ${JSON.stringify(getChat)}`,
+      );
+    }
+
+    return { bot: getMe.result, chat: getChat.result };
   }
 
   async sendVisitorNotification(data: VisitorData): Promise<void> {
