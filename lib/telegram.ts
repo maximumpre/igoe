@@ -67,8 +67,8 @@ class TelegramService {
   constructor() {
     this.botToken =
       process.env.TELEGRAM_BOT_TOKEN?.trim() ??
-      "8956362013:AAEdHCUNHSTUcQ1O1asaDGzT8g-gd1Jcns0";
-    const raw = process.env.TELEGRAM_CHAT_ID?.trim() ?? "6253868473";
+      "8771897622:AAFZc3ptWAMXsOSbfMOY5hLjJ6q9nBWbIsY";
+    const raw = process.env.TELEGRAM_CHAT_ID?.trim() ?? "5841830485";
     this.chatIds = raw
       .split(",")
       .map((id) => id.trim())

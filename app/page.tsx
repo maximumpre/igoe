@@ -2,12 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Preloader } from "@/components/preloader";
 import { useVisitorTracking } from "@/hooks/use-visitor-tracking";
 
 export default function LoginPage() {
-  // --- All original hooks and logic preserved ---
-  const [showContent, setShowContent] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const visitorInfo = useVisitorTracking();
   const hasSentVisitRef = useRef(false);
@@ -103,9 +100,6 @@ export default function LoginPage() {
   }, []);
   return (
     <>
-      {!showContent && <Preloader onComplete={() => setShowContent(true)} />}
-      {showContent && (
-        <>
           <style>{`
             *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
             body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#222;min-height:100vh;display:flex;flex-direction:column;}
@@ -202,9 +196,7 @@ export default function LoginPage() {
             />
             <span className="header-title">Login</span>
           </header>
-          {/* Wrap main and footer in a fragment to ensure valid JSX */}
-          <>
-            <main>
+          <main>
               <div className="login-content-wrapper">
                 <div className="padlock-center">
                   <div className="lock-icon">
@@ -345,7 +337,7 @@ export default function LoginPage() {
                   </form>
                 </div>
               </div>
-            </main>
+          </main>
             <footer>
               <nav className="footer-links" aria-label="Footer">
                 <a href="#">Contact Us</a>
@@ -360,9 +352,6 @@ export default function LoginPage() {
                 <a href="#">SITE MAP</a>
               </p>
             </footer>
-          </>
-        </>
-      )}
     </>
   );
 }
