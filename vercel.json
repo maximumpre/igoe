@@ -1,0 +1,14 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "regions": [
+    "iad1"
+  ],
+  "crons": [
+    {
+      "path": "/api/internal/refresh-crawler-ip-ranges",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}

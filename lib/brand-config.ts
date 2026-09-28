@@ -1,0 +1,7 @@
+export const BRAND_EMPLOYER_NAME = "Goigoe Wealthcare"
+export const BRAND_PORTAL_NAME = "Goigoe Wealthcare"
+export const BRAND_FULL_SITE_NAME = "Goigoe Wealthcare"
+export const BRAND_THEME_COLOR = "#010147"
+export const OPEN_GRAPH_TITLE = "Goigoe Wealthcare Member Login"
+export const BRAND_LOGO_SRC = "/img/ebc994a1e5464f6b94b98cd212d5cbac.jpeg"
+export const BRAND_LOGO_ALT = "Goigoe Wealthcare"
