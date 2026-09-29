@@ -9,46 +9,19 @@ import { isCrawlerSeoPreviewUnlocked } from "@/lib/crawler-seo-preview"
 import { isSeoCrawlerPath } from "@/lib/seo-crawler-paths"
 import ProtectedLayout from "@/components/protected-layout"
 import { SeoJsonLd } from "@/components/seo-json-ld"
+import { CrawlerSeoHead, SITE_METADATA } from "@/components/seo-head"
 import { BRAND_THEME_COLOR } from "@/lib/brand-config"
-import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE } from "@/lib/seo-metadata"
-import { INDEXABLE_PAGE_ROBOTS } from "@/lib/seo-robots-metadata"
 import {
-  OG_IMAGE,
   SITE_DISPLAY_NAME,
   SITE_HOMEPAGE_CANONICAL,
-  SITE_ORIGIN,
-  ogImageAbsoluteUrl,
 } from "@/lib/site-url"
 import "./globals.css"
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
-const OG_IMAGE_URL = ogImageAbsoluteUrl()
-
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_ORIGIN),
-  title: {
-    default: SITE_TITLE,
-    template: `%s | ${SITE_DISPLAY_NAME}`,
-  },
-  description: SITE_DESCRIPTION,
-  keywords: SITE_KEYWORDS,
-  applicationName: SITE_DISPLAY_NAME,
-  authors: [{ name: SITE_DISPLAY_NAME }],
-  creator: SITE_DISPLAY_NAME,
-  publisher: SITE_DISPLAY_NAME,
-  referrer: "origin-when-cross-origin",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  robots: INDEXABLE_PAGE_ROBOTS,
-  category: "Business",
-  alternates: {
-    canonical: SITE_HOMEPAGE_CANONICAL,
-  },
+  ...SITE_METADATA,
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -68,28 +41,6 @@ export const metadata: Metadata = {
     "msapplication-TileImage": "/icon-48x48.png",
   },
   themeColor: BRAND_THEME_COLOR,
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: SITE_HOMEPAGE_CANONICAL,
-    siteName: SITE_DISPLAY_NAME,
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: OG_IMAGE_URL,
-        width: OG_IMAGE.width,
-        height: OG_IMAGE.height,
-        alt: OG_IMAGE.alt,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    images: [OG_IMAGE_URL],
-  },
 }
 
 export const dynamic = "force-dynamic"
@@ -113,6 +64,7 @@ export default async function RootLayout({
     return (
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
         <body className="font-sans antialiased">
+          <CrawlerSeoHead />
           <SeoJsonLd />
           <CrawlerSeoPage />
           <Analytics />

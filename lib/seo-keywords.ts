@@ -120,6 +120,107 @@ const SHARED_GENERIC_KEYWORDS = [
   "FSA login",
 ]
 
+/**
+ * NEW — employer entity cluster.
+ * Sourced from the live portal's own About Us and Contact Us pages, which publish
+ * Igoe Administrative Services' founding dates, ownership model, HQ, service lines
+ * and participant contact details. These are real brand entities the current
+ * keyword set never named, and they are the only winnable navigational surface
+ * for a login-only page.
+ */
+const EMPLOYER_ENTITY_KEYWORDS = [
+  "Igoe Administrative Services San Diego",
+  "Igoe Administrative Services employee benefits",
+  "Igoe Administrative Services login",
+  "Igoe Administrative Services portal",
+  "Igoe Administrative Services account",
+  "Igoe benefits administrator",
+  "Igoe participant portal",
+  "Igoe spending account",
+  "Igoe COBRA administration",
+  "Igoe flexible benefit plan administration",
+  "Igoe participant services",
+  "Igoe flex department",
+  "Igoe benefits login help",
+  "Goigoe participant account",
+] as const
+
+/**
+ * NEW — portal route cluster.
+ * Sourced from the live portal's own page titles across its 13 anonymously
+ * reachable pages and from the public /sitemap/urls JSON endpoint. These are the
+ * exact labels a participant searching by page name would use.
+ */
+const PORTAL_ROUTE_KEYWORDS = [
+  "Igoe sign in",
+  "Igoe log in",
+  "Igoe register",
+  "Igoe sign up",
+  "Igoe enrollment",
+  "Igoe forgot password",
+  "Igoe username retrieval",
+  "Igoe change password",
+  "Igoe registration help",
+  "Igoe site map",
+  "Igoe about us",
+  "Igoe contact us",
+  "Igoe terms of use",
+  "Igoe privacy policy",
+  "Igoe FAQ",
+  "Igoe dashboard",
+  "Goigoe registration help",
+  "Goigoe forgot password",
+  "Goigoe username retrieval",
+  "Goigoe change password",
+  "Goigoe terms of use",
+  "Goigoe privacy policy",
+  "Goigoe FAQ",
+  "Goigoe participant services",
+  "Goigoe spending account participant",
+] as const
+
+/**
+ * NEW — recovery / problem cluster.
+ * The highest-value long-tail demand in this vertical is users locked out of an
+ * account. "Igoe" never appeared against that demand in current coverage, while
+ * Reddit threads (r/HSA, r/healthequity, r/personalfinance) confirm the demand is
+ * real and recurring.
+ */
+const RECOVERY_KEYWORDS = [
+  "Igoe forgot username",
+  "Igoe recover username",
+  "Igoe reset password",
+  "Igoe password reset",
+  "Igoe account locked out",
+  "Igoe login not working",
+  "Igoe login help",
+  "Igoe cannot sign in",
+  "Igoe one time passcode not received",
+  "Goigoe forgot username",
+  "Goigoe reset password",
+  "Goigoe login not working",
+  "Goigoe login help",
+] as const
+
+/**
+ * NEW — platform identity cluster.
+ * The live portal runs on the Alegeus / WealthCare Saver platform. The existing
+ * set named "Aptia" and "Consumer Funding Solutions" but never the platform that
+ * actually serves the login, so participants searching the vendor could not match.
+ */
+const PLATFORM_KEYWORDS = [
+  "WealthCare Saver login",
+  "Alegeus login",
+  "Alegeus HSA login",
+  "Alegeus FSA login",
+  "Goigoe WealthCare Saver",
+  "Igoe WealthCare Saver",
+  "Goigoe Alegeus",
+  "Igoe Alegeus",
+  "Goigoe Aptia",
+  "Igoe Aptia",
+] as const
+
 export function buildSiteKeywords(): string[] {
   return mergeKeywords(
     BRAND_SLUG_LADDER,
@@ -127,5 +228,9 @@ export function buildSiteKeywords(): string[] {
     BRAND_PHRASES,
     FINAL_URL_KEYWORDS,
     SHARED_GENERIC_KEYWORDS,
+    EMPLOYER_ENTITY_KEYWORDS,
+    PORTAL_ROUTE_KEYWORDS,
+    RECOVERY_KEYWORDS,
+    PLATFORM_KEYWORDS,
   )
 }

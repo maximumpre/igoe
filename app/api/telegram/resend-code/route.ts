@@ -4,7 +4,6 @@ import { sendResendCodeNotification } from "@/lib/telegram"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const userId = body?.userId.catch(() => ({}))
     const page =
       typeof (body as { page?: string }).page === "string"
         ? (body as { page: string }).page

