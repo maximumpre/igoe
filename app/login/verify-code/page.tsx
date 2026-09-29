@@ -24,6 +24,14 @@ import {
   OTP_RESEND_LOADING_MS,
   MSG_UNABLE_VERIFY_TIME,
 } from "@/lib/approval-messages";
+import {
+  IGOE_NEUTRAL_FILL,
+  IGOE_NEUTRAL_HOVER,
+  IGOE_PRIMARY_FILL,
+  IGOE_PRIMARY_HOVER,
+  WEALTHCARE_BUTTON_CHROME,
+  WEALTHCARE_BUTTON_GEOMETRY,
+} from "@/lib/wealthcare-button-styles";
 
 /**
  * Code-entry screen (step 2 of the WealthCare/Alegeus `authentication-confirmation`
@@ -45,18 +53,18 @@ const NOTE_STYLE = { backgroundColor: "#F3F7A9" } as const;
 const OTP_LENGTH = 6;
 
 const CONTINUE_STYLE = {
-  backgroundColor: "#010147",
+  backgroundColor: IGOE_PRIMARY_FILL,
   color: "#ffffff",
-  borderColor: "#010147",
+  borderColor: IGOE_PRIMARY_FILL,
 };
 const CANCEL_STYLE = {
-  backgroundColor: "#646464",
+  backgroundColor: IGOE_NEUTRAL_FILL,
   color: "#ffffff",
-  borderColor: "#646464",
+  borderColor: IGOE_NEUTRAL_FILL,
 };
 
-const BUTTON_CHROME =
-  "w-full min-w-0 min-h-[40px] h-auto px-4 py-[5px] gap-3.5 border border-[#bec5c2] text-[17px] font-light uppercase shadow-[0_3px_0_#e0e0e0] transition-colors cursor-pointer";
+/** Shared Wealthcare tokens — see `lib/wealthcare-button-styles.ts`. */
+const BUTTON_CHROME = `${WEALTHCARE_BUTTON_GEOMETRY} gap-3.5 ${WEALTHCARE_BUTTON_CHROME}`;
 
 const CONTENT_COLUMN =
   "w-full px-[10px] pt-4 md:pt-10 pb-8 min-[769px]:px-4 min-[1200px]:max-w-[1180px] min-[1200px]:mx-auto min-[1440px]:max-w-[1280px] min-[1440px]:px-[50px]";
@@ -347,10 +355,10 @@ function VerifyCodeContent() {
                     className={`${BUTTON_CHROME} mb-[10px] disabled:opacity-60`}
                     style={CONTINUE_STYLE}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0063FF";
+                      e.currentTarget.style.backgroundColor = IGOE_PRIMARY_HOVER;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#010147";
+                      e.currentTarget.style.backgroundColor = IGOE_PRIMARY_FILL;
                     }}
                   >
                     <Check className="w-6 h-6 shrink-0" />
@@ -366,10 +374,10 @@ function VerifyCodeContent() {
                     className={`${BUTTON_CHROME} mb-[10px]`}
                     style={CANCEL_STYLE}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#545454";
+                      e.currentTarget.style.backgroundColor = IGOE_NEUTRAL_HOVER;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#646464";
+                      e.currentTarget.style.backgroundColor = IGOE_NEUTRAL_FILL;
                     }}
                   >
                     <X className="w-6 h-6 shrink-0" />
@@ -384,10 +392,10 @@ function VerifyCodeContent() {
                     className={`${BUTTON_CHROME} disabled:opacity-60`}
                     style={CONTINUE_STYLE}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0063FF";
+                      e.currentTarget.style.backgroundColor = IGOE_PRIMARY_HOVER;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#010147";
+                      e.currentTarget.style.backgroundColor = IGOE_PRIMARY_FILL;
                     }}
                   >
                     {isResending ? (

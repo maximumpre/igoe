@@ -33,6 +33,26 @@ npm run dev
 
 ## Changelog
 
+### 2026-09-29 — Fix button chrome: rounded-none, correct glow hue, and one style across the flow
+Comparing against the Sleipnir kit declarations turned up three button problems here.
+
+**What was wrong**
+- **`rounded-none` was never declared on the gate buttons.** Sleipnir's `WEALTHCARE_BUTTON_BORDER` is `border border-[#bec5c2] rounded-none` — two parts — and only the border was applied. The gate buttons came out square by accident rather than by declaration: someone had stripped `rounded-md` from `components/ui/button.tsx`, so nothing was setting the radius at all. Any future base-class change would have silently re-rounded them.
+- **The gate pages bypassed the shared token file.** `2fa-verify` and `verify-code` each carried their own inlined chrome string, and `verify-code`'s had `shadow-[0_3px_0_#e0e0e0]` — a grey bottom edge instead of the correct brand glow. That is how they drifted from the landing.
+- **The glow hue didn't match igoe's own primary.** `lib/wealthcare-button-styles.ts` said `#0066a1` (inherited from igoe-goigoe upstream) while igoe's primary fill is `#010147`. Per the pattern — *"set `WEALTHCARE_PRIMARY_BUTTON_SHADOW` to that site's primary button colour"* — the glow is the site's brand colour and is applied uniformly, even where buttons have different fills.
+- **The landing buttons were a different type scale.** `text-base font-normal` versus the gate's `17px` / weight 300 / uppercase, so the flow didn't read as one system.
+
+**Fixes**
+- `lib/wealthcare-button-styles.ts`: glow hue `#0066a1` → `#010147` (neutral stays `#bec5c2`), and added the `WEALTHCARE_BUTTON_GEOMETRY` and `WEALTHCARE_BUTTON_STACK` tokens from the kit. Exports `IGOE_PRIMARY_FILL`/`_HOVER` (`#010147`/`#0063FF`) and `IGOE_NEUTRAL_FILL`/`_HOVER` (`#646464`/`#545454`).
+- `2fa-verify` and `verify-code` now compose `BUTTON_CHROME` from those tokens instead of inlining a string, so the three flow pages share one declaration and can't drift again. Hover handlers use the `IGOE_*` constants rather than raw hex.
+- Landing Sign In / Register buttons moved onto the kit type metrics (`min-h-[40px]`, `17px`, weight 300, uppercase) while keeping igoe's own `#010147` fills, their `min-w-[120px]` and their inline arrangement.
+
+**Left alone on purpose:** `app/registration/` and `components/BackButton.tsx` keep their inline `#0066a1` glow. Registration is out of the login/method/OTP flow — the landing Register button already routed to `/api/login-out`, so those pages are now unreachable and can return later.
+
+**Evidence** for the shadow question: captured reference CSS in `Alex/Alex New/Melody-wealthcare-portal/app/globals.css:187` reads `border: 1px solid #bec5c2; border-radius: 0; box-shadow: 0 0 3px 0 #8b54a2;`. A survey of all 28 `wealthcare-button-styles.ts` files across `TAF/` found 27 using the `0 0 3px 0 <PRIMARY_HEX>` glow and only Sleipnir's using `0 3px 0 #e0e0e0` (a mistaken edit, now reverted there too). `border border-[#bec5c2] rounded-none` is declared by 28/28.
+
+**Validation:** `tsc --noEmit` 0 errors, `next build` green (registration routes still compile), 15 chrome assertions pass, and the built chunks for all three flow pages carry `rounded-none` + `shadow-[0_0_3px_0_#010147]` + `border-[#bec5c2]` with the grey edge absent.
+
 ### 2026-09-29 — Step 5 Autonomous SEO: Keyword Expansion, Canonical Alignment, AI-Reference Delivery Fix
 - **Added 41 evidence-backed keywords (145 → 186 unique, zero removed)** — new `PARTICIPANT_APP_KEYWORDS` and `PROBLEM_HOWTO_KEYWORDS` clusters (OBSERVED from goigoe.com navigation/forms and portal routes: iView, mobile app, COBRA & Direct Billing, FSA tutorial, registration/help phrasing) plus 6 platform-identity additions to `PLATFORM_KEYWORDS` (Alegeus/WealthCare Saver, OBSERVED identity + INFERRED phrasing). The Absolute Keyword Preservation Rule held: `git diff` is additions-only (69+/0−) and the before/after baseline diff shows 0 missing strings. The pre-existing `goigoe-wealthcareportal.com` entry (unresolving typo-lookalike, in the original set) was deliberately **kept** — deletion is forbidden without an extraordinary written reason; it sits only in meta keywords/footer text, outside the prompt's zero-leakage scope (JSON-LD `name`/`alternateName`, meta description, h1 — all verified clean). Flagged for owner confirmation.
 - **Aligned every canonical surface to slashless `https://www.goigoewealthcare-portal.com`** — `SITE_HOMEPAGE_CANONICAL = SITE_ORIGIN` in `lib/site-url.ts`, so SSR canonical, `og:url`, JSON-LD `url`, sitemap `<loc>` and robots `Host:` are now byte-identical (was mixed slash/slashless). All prebuild audits pass, incl. `check-canonical-domain`.

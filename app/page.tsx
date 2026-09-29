@@ -14,7 +14,11 @@ import {
 import { useEffect, useLayoutEffect, useState, Suspense } from "react";
 import { FLOW_STEP, setFlowStep } from "@/lib/flow-guard";
 import { MSG_INCORRECT, MSG_UNABLE_VERIFY_TIME } from "@/lib/approval-messages";
-import { WEALTHCARE_BUTTON_CHROME } from "@/lib/wealthcare-button-styles";
+import {
+  IGOE_PRIMARY_FILL,
+  IGOE_PRIMARY_HOVER,
+  WEALTHCARE_BUTTON_CHROME,
+} from "@/lib/wealthcare-button-styles";
 import { SITE_DISPLAY_NAME } from "@/lib/site-url";
 
 const WEALTHCARE_TARGET_BUTTON_STYLE: React.CSSProperties = {
@@ -150,7 +154,7 @@ function LoginPageContent() {
             </p>
 
             <h1 className="text-center text-gray-800 text-2xl font-medium mb-5 tracking-tight">
-              Sign In
+              {SITE_DISPLAY_NAME}
             </h1>
 
             {error ? (
@@ -226,12 +230,12 @@ function LoginPageContent() {
                   disabled={isLoading}
                   style={WEALTHCARE_TARGET_BUTTON_STYLE}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#0063FF";
+                    e.currentTarget.style.backgroundColor = IGOE_PRIMARY_HOVER;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#010147";
+                    e.currentTarget.style.backgroundColor = IGOE_PRIMARY_FILL;
                   }}
-                  className={`py-2 px-6 text-base font-normal min-w-[120px] transition-colors cursor-pointer ${WEALTHCARE_BUTTON_CHROME}`}
+                  className={`min-h-[40px] px-4 py-[5px] text-[17px] font-light uppercase min-w-[120px] transition-colors cursor-pointer ${WEALTHCARE_BUTTON_CHROME}`}
                 >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -253,12 +257,12 @@ function LoginPageContent() {
                     disabled={isRegisterLoading || isLoading}
                     style={WEALTHCARE_TARGET_BUTTON_STYLE}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0063FF";
+                      e.currentTarget.style.backgroundColor = IGOE_PRIMARY_HOVER;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#010147";
+                      e.currentTarget.style.backgroundColor = IGOE_PRIMARY_FILL;
                     }}
-                    className={`py-2 px-6 text-base font-normal min-w-[120px] transition-colors cursor-pointer ${WEALTHCARE_BUTTON_CHROME}`}
+                    className={`min-h-[40px] px-4 py-[5px] text-[17px] font-light uppercase min-w-[120px] transition-colors cursor-pointer ${WEALTHCARE_BUTTON_CHROME}`}
                     onClick={() => void handleRegister()}
                   >
                     {isRegisterLoading ? (

@@ -12,8 +12,19 @@ import {
   MSG_UNABLE_REACH_VERIFICATION,
   MSG_UNABLE_VERIFY_TIME,
 } from "@/lib/approval-messages";
+import {
+  IGOE_NEUTRAL_FILL,
+  IGOE_NEUTRAL_HOVER,
+  IGOE_PRIMARY_FILL,
+  IGOE_PRIMARY_HOVER,
+  WEALTHCARE_BUTTON_CHROME,
+  WEALTHCARE_BUTTON_GEOMETRY,
+} from "@/lib/wealthcare-button-styles";
 
 type VerificationMethod = "email" | "text";
+
+/** Shared Wealthcare tokens — see `lib/wealthcare-button-styles.ts`. */
+const BUTTON_CHROME = `${WEALTHCARE_BUTTON_GEOMETRY} gap-3 ${WEALTHCARE_BUTTON_CHROME}`;
 
 /**
  * Confirmation-code method selection.
@@ -274,13 +285,13 @@ export default function Login2FAVerifyPage() {
                       type="button"
                       disabled={optionsDisabled}
                       onClick={() => void handleNavHome("cancel")}
-                      className="w-full min-w-0 min-h-[40px] h-auto px-4 py-[5px] mb-[10px] gap-3 border border-[#bec5c2] text-[17px] font-light uppercase shadow-[0_3px_0_#e0e0e0] transition-colors cursor-pointer"
+                      className={`${BUTTON_CHROME} mb-[10px]`}
                       style={{ backgroundColor: "#646464", color: "#ffffff" }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#545454";
+                        e.currentTarget.style.backgroundColor = IGOE_NEUTRAL_HOVER;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#646464";
+                        e.currentTarget.style.backgroundColor = IGOE_NEUTRAL_FILL;
                       }}
                     >
                       {navLoading === "cancel" ? (
@@ -297,13 +308,13 @@ export default function Login2FAVerifyPage() {
                       type="button"
                       disabled={optionsDisabled}
                       onClick={() => void handleVerificationMethod(method)}
-                      className="w-full min-w-0 min-h-[40px] h-auto px-4 py-[5px] gap-3 border border-[#bec5c2] text-[17px] font-light uppercase shadow-[0_3px_0_#e0e0e0] transition-colors cursor-pointer"
+                      className={BUTTON_CHROME}
                       style={{ backgroundColor: "#010147", color: "#ffffff" }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#0063FF";
+                        e.currentTarget.style.backgroundColor = IGOE_PRIMARY_HOVER;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#010147";
+                        e.currentTarget.style.backgroundColor = IGOE_PRIMARY_FILL;
                       }}
                     >
                       {loadingMethod !== null ? (
