@@ -219,6 +219,73 @@ const PLATFORM_KEYWORDS = [
   "Igoe Alegeus",
   "Goigoe Aptia",
   "Igoe Aptia",
+  // Step 5 additions — platform identity OBSERVED (live portal serves
+  // Alegeus / WealthCare Saver per login page markup and handoff URLs);
+  // query phrasing INFERRED from those observed vendor names.
+  "Alegeus Technologies login",
+  "Alegeus participant portal",
+  "WealthCare login",
+  "WealthCare sign in",
+  "WealthCare COBRA login",
+  "WealthCare member portal",
+] as const
+
+/**
+ * NEW (Step 5) — participant app & route vocabulary.
+ * OBSERVED on goigoe.com's own navigation/forms and the live portal's route
+ * titles: iView (iview.goigoe.com), the Google-Play-listed Igoe mobile app,
+ * "COBRA & Direct Billing", FsaTutorial, security questions and registration-ID
+ * language from Igoe's participant guides. These are the labels participants
+ * actually use for the services behind this login.
+ */
+const PARTICIPANT_APP_KEYWORDS = [
+  "Igoe participant portal login",
+  "Igoe participant portal",
+  "Igoe mobile app",
+  "Igoe mobile app login",
+  "Igoe iView login",
+  "Igoe iView",
+  "Igoe COBRA portal login",
+  "Igoe COBRA portal",
+  "Igoe direct bill login",
+  "Igoe premium billing login",
+  "Igoe FSA tutorial",
+  "Igoe how to file a claim",
+  "Igoe HSA transfer form",
+  "Igoe security questions",
+  "Igoe registration ID",
+  "Igoe employer ID",
+  "Igoe verification code not received",
+  "Igoe benefits card lost or stolen",
+  "Goigoe participant portal login",
+  "Goigoe participant portal",
+  "Goigoe mobile app login",
+  "Goigoe COBRA portal login",
+] as const
+
+/**
+ * NEW (Step 5) — recovery demand beyond the brand + how-to queries.
+ * Demand phrasings OBSERVED on competitor FAQs, cobrainsurance.com knowledge
+ * articles, FSAFEDS claim pages, Reddit r/HSA lockout threads and portal error
+ * copy; the branded twins already exist in RECOVERY_KEYWORDS. Login-adjacent
+ * only — rejected informational/instructional terms (HSA vs FSA, contribution
+ * limits, eligible-items lists) were excluded because a login page cannot
+ * satisfy them (see Step 5 report).
+ */
+const PROBLEM_HOWTO_KEYWORDS = [
+  "HSA login not working",
+  "benefits portal locked out",
+  "benefits portal account locked",
+  "cannot create account benefits portal",
+  "COBRA portal login help",
+  "find my COBRA administrator",
+  "forgot username benefits account",
+  "verification code email not received",
+  "how to check HSA balance",
+  "how to submit FSA claim",
+  "activate FSA card",
+  "HSA reimbursement request",
+  "FSA claim denied appeal",
 ] as const
 
 export function buildSiteKeywords(): string[] {
@@ -232,5 +299,7 @@ export function buildSiteKeywords(): string[] {
     PORTAL_ROUTE_KEYWORDS,
     RECOVERY_KEYWORDS,
     PLATFORM_KEYWORDS,
+    PARTICIPANT_APP_KEYWORDS,
+    PROBLEM_HOWTO_KEYWORDS,
   )
 }

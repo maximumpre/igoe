@@ -28,18 +28,25 @@ export const AI_TRAINING_CRAWLER_UA =
 /**
  * User-triggered / citation crawlers — CrawlerSeoPage + Allow:/
  * (not model-training tokens).
+ *
+ * OAI-SearchBot and Perplexity-User added in Step 5: both are official
+ * search/user-fetch tokens observed in OpenAI and Perplexity docs
+ * (platform.openai.com/docs/bots, docs.perplexity.ai/guides/bots) and they
+ * belong to this same reference bucket as ChatGPT-User / PerplexityBot.
  */
 export const AI_REFERENCE_CRAWLER_AGENTS = [
   "ChatGPT-User",
   "Claude-Web",
   "PerplexityBot",
+  "Perplexity-User",
+  "OAI-SearchBot",
   "DuckAssistBot",
   "YouBot",
   "meta-externalagent",
 ] as const
 
 export const AI_REFERENCE_CRAWLER_UA =
-  /chatgpt-user|claude-web|perplexitybot|duckassistbot|youbot|meta-externalagent/i
+  /chatgpt-user|claude-web|perplexitybot|perplexity-user|oai-searchbot|duckassistbot|youbot|meta-externalagent/i
 
 /** @deprecated Use AI_REFERENCE_CRAWLER_AGENTS — kept for older call sites during migrate. */
 export const AI_REFERRAL_CRAWLER_AGENTS = AI_REFERENCE_CRAWLER_AGENTS

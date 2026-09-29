@@ -61,7 +61,7 @@ export default function CrawlerSeoPage() {
           </p>
 
           <h1 className="text-center text-gray-800 text-2xl font-medium mb-5 tracking-tight">
-            Sign In
+            {SITE_DISPLAY_NAME}
           </h1>
 
           <div className="space-y-4">

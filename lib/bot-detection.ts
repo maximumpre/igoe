@@ -5,15 +5,18 @@ import {
 /**
  * Crawler UA classification for SSR CrawlerSeoPage + middleware headers.
  *
- * | Bucket        | Destination                                      |
- * |---------------|--------------------------------------------------|
- * | Ranking       | CrawlerSeoPage on `/` (Google/Bing/DDG/Yahoo/…)  |
- * | Social        | CrawlerSeoPage on `/` (link previews)            |
- * | Discovery     | CrawlerSeoPage on `/` (Yandex/Mojeek/CCBot/…)    |
- * | Denied        | ErrorScreen / CF block (Ahrefs/Semrush/scanners) |
+ * | Bucket         | Destination                                      |
+ * |----------------|--------------------------------------------------|
+ * | Ranking        | CrawlerSeoPage on `/` (Google/Bing/DDG/Yahoo/…)  |
+ * | Social         | CrawlerSeoPage on `/` (link previews)            |
+ * | Discovery      | CrawlerSeoPage on `/` (Yandex/Mojeek/CCBot/…)    |
+ * | AI reference   | CrawlerSeoPage on `/` (ChatGPT-User, Perplexity…) |
+ * | Denied         | ErrorScreen / CF block (Ahrefs/Semrush/scanners) |
  *
  * SEARCH_CRAWLER_UA = ranking only (Google/Bing-specific headers).
- * isCrawlerSeoPageUA = ranking ∪ social ∪ discovery → x-crawler-seo-page.
+ * isCrawlerSeoPageUA = ranking ∪ social ∪ discovery ∪ AI reference → x-crawler-seo-page.
+ * (AI-reference membership per Steins Gate kit; without it ChatGPT-User and
+ * PerplexityBot fall through to the gated human branch instead of the twin.)
  */
 
 export const GOOGLE_CRAWLER_UA =
@@ -53,7 +56,7 @@ export const DISCOVERY_CRAWLER_UA =
 
 /** Combined allowlist for CrawlerSeoPage + x-crawler-seo-page stamp. */
 export const CRAWLER_SEO_PAGE_UA = new RegExp(
-  `(?:${SEARCH_CRAWLER_UA.source})|(?:${SOCIAL_PREVIEW_UA.source})|(?:${DISCOVERY_CRAWLER_UA.source})`,
+  `(?:${SEARCH_CRAWLER_UA.source})|(?:${SOCIAL_PREVIEW_UA.source})|(?:${DISCOVERY_CRAWLER_UA.source})|(?:${AI_REFERENCE_CRAWLER_UA.source})`,
   "i",
 )
 
