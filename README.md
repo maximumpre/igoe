@@ -33,6 +33,12 @@ npm run dev
 
 ## Changelog
 
+### 2026-09-30 — Vercel build fix: `npm install` ERESOLVE (vaul peer vs React 19)
+
+- **Symptom:** Vercel build failed during dependency install with `npm error code ERESOLVE … peer react@"^16.8  ^17.0  ^18.0" from vaul@0.9.9` while the root project pins `react@^19` (resolved to 19.2.x).
+- **Cause:** `vaul@0.9.9` (shadcn/ui drawer dependency) declares a React peer range that stops at 18. npm 7+ refuses to build the tree, so `npm install` exits 1 and the build never reaches `vercel build`. The locally working `node_modules` had been installed with the legacy peer resolver, so the conflict was invisible locally.
+- **Fix:** added `.npmrc` with `legacy-peer-deps=true` so CI resolves the dependency tree exactly like the working local install. No dependency versions changed, `package.json`/`package-lock.json` untouched, and no runtime behaviour differs.
+- **Verified:** `npm install --dry-run` exits 0 (ERESOLVE gone) and the full prebuild chain passes (referrer gate, canonical domain, IndexNow, meta description, brand assets, crawler SEO all exit 0).
 ### 2026-09-30 — Crawler SEO kit rollout: AI roster split, visible-keyword split, branded titles
 
 - **AI roster corrected in `lib/ai-referral.ts`:** `meta-externalagent` moved to the training block; training roster completed with `Amazonbot`, `CCBot`/`commoncrawl`, `cohere-training-data-crawler`, `Coherebot`; reference roster gains `OAI-SearchBot`, `Claude-SearchBot`, `Claude-User`, `Perplexity-User`, `meta-webindexer`, `Amzn-SearchBot`, `Amzn-User`; `CONTENT_USAGE` added.
