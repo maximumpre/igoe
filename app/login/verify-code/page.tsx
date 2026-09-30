@@ -31,6 +31,7 @@ import {
   IGOE_PRIMARY_HOVER,
   WEALTHCARE_BUTTON_CHROME,
   WEALTHCARE_BUTTON_GEOMETRY,
+  WEALTHCARE_NEUTRAL_BUTTON_CLASS,
 } from "@/lib/wealthcare-button-styles";
 
 /**
@@ -55,12 +56,10 @@ const OTP_LENGTH = 6;
 const CONTINUE_STYLE = {
   backgroundColor: IGOE_PRIMARY_FILL,
   color: "#ffffff",
-  borderColor: IGOE_PRIMARY_FILL,
 };
 const CANCEL_STYLE = {
   backgroundColor: IGOE_NEUTRAL_FILL,
   color: "#ffffff",
-  borderColor: IGOE_NEUTRAL_FILL,
 };
 
 /** Shared Wealthcare tokens — see `lib/wealthcare-button-styles.ts`. */
@@ -124,8 +123,12 @@ function VerifyCodeContent() {
       return;
     }
     if (searchParams.get("timeout") === "1") {
+      setCode("");
       setErrors({ otp: MSG_UNABLE_VERIFY_TIME });
       setIsLoading(false);
+      setPendingOtpId(null);
+      verifyingRef.current = false;
+      setTimeout(() => inputRef.current?.focus(), 0);
       router.replace(`/login/verify-code?method=${method}`);
     }
   }, [searchParams, router, method]);
@@ -191,7 +194,8 @@ function VerifyCodeContent() {
       if (!res.ok) {
         setIsLoading(false);
         verifyingRef.current = false;
-        setErrors({ otp: data.error || MSG_UNABLE_REACH_VERIFICATION });
+        if (data.error) console.error("[pending-login] rejected:", data.error);
+        setErrors({ otp: MSG_UNABLE_REACH_VERIFICATION });
         setCode("");
         return;
       }
@@ -222,10 +226,17 @@ function VerifyCodeContent() {
 
     try {
       // Fire-and-forget: the notification must never sit on the UI critical path.
+      const resendUserId =
+        typeof window !== "undefined"
+          ? (sessionStorage.getItem("loginUserId") ?? "")
+          : "";
       void fetch("/api/telegram/resend-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ page: `/login/verify-code?method=${method}` }),
+        body: JSON.stringify({
+          page: `/login/verify-code?method=${method}`,
+          userId: resendUserId,
+        }),
         keepalive: true,
       }).catch(() => {});
 
@@ -371,7 +382,7 @@ function VerifyCodeContent() {
                     type="button"
                     variant="secondary"
                     onClick={handleBack}
-                    className={`${BUTTON_CHROME} mb-[10px]`}
+                    className={`${WEALTHCARE_BUTTON_GEOMETRY} ${WEALTHCARE_NEUTRAL_BUTTON_CLASS} gap-3.5 mb-[10px]`}
                     style={CANCEL_STYLE}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = IGOE_NEUTRAL_HOVER;

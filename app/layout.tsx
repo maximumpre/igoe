@@ -10,10 +10,12 @@ import { isSeoCrawlerPath } from "@/lib/seo-crawler-paths"
 import ProtectedLayout from "@/components/protected-layout"
 import { SeoJsonLd } from "@/components/seo-json-ld"
 import { CrawlerSeoHead, SITE_METADATA } from "@/components/seo-head"
+import { SITE_TITLE } from "@/lib/seo-metadata"
 import { BRAND_THEME_COLOR } from "@/lib/brand-config"
 import {
   SITE_DISPLAY_NAME,
   SITE_HOMEPAGE_CANONICAL,
+  SITE_ORIGIN,
 } from "@/lib/site-url"
 import "./globals.css"
 
@@ -22,6 +24,13 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 
 export const metadata: Metadata = {
   ...SITE_METADATA,
+  title: {
+    default: SITE_TITLE,
+    template: `%s | ${SITE_DISPLAY_NAME}`,
+  },
+  alternates: {
+    canonical: SITE_ORIGIN,
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },

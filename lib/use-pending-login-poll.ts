@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { FLOW_STEP, setFlowStep } from '@/lib/flow-guard'
+import { MSG_UNABLE_REACH_VERIFICATION } from '@/lib/approval-messages'
 
 const POLL_MS = 2000
 const TIMEOUT_MS = 90_000
@@ -117,7 +118,7 @@ export function usePendingLoginPoll({
         if (cancelled) return
         if (Date.now() - startedAt > TIMEOUT_MS) {
           handleTimeout()
-          onError?.('Request timed out. Please try again.')
+          onError?.(MSG_UNABLE_REACH_VERIFICATION)
           return
         }
         window.setTimeout(poll, POLL_MS)

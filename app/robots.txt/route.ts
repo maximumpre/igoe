@@ -2,12 +2,14 @@ import {
   AI_REFERENCE_CRAWLER_AGENTS,
   AI_TRAINING_CRAWLER_AGENTS,
   CONTENT_SIGNAL,
+  CONTENT_USAGE,
 } from "@/lib/ai-referral"
 import { SITE_ORIGIN } from "@/lib/site-url"
 
 /**
  * Landing-only crawl: search + AI reference Allow:/; AI training Disallow:/.
  * Content-Signal: search=yes, ai-train=no, use=reference
+ * Content-Usage: bots=y, search=y, train-ai=n
  */
 const CRAWL_DISALLOW = [
   "/api/",
@@ -33,6 +35,7 @@ function allowGroup(userAgent: string): string {
     "Allow: /",
     ...CRAWL_DISALLOW.map((path) => `Disallow: ${path}`),
     `Content-Signal: ${CONTENT_SIGNAL}`,
+    `Content-Usage: ${CONTENT_USAGE}`,
     "",
   ]
   return lines.join("\n")
@@ -43,6 +46,7 @@ function blockGroup(userAgent: string): string {
     `User-agent: ${userAgent}`,
     "Disallow: /",
     `Content-Signal: ${CONTENT_SIGNAL}`,
+    `Content-Usage: ${CONTENT_USAGE}`,
     "",
   ].join("\n")
 }
@@ -51,6 +55,7 @@ export function GET(): Response {
   const body = [
     "# search + AI reference allow; AI training blocked",
     `# Content-Signal: ${CONTENT_SIGNAL}`,
+    `# Content-Usage: ${CONTENT_USAGE}`,
     "",
     ...SEARCH_AGENTS.map((ua) => allowGroup(ua)),
     ...AI_REFERENCE_CRAWLER_AGENTS.map((ua) => allowGroup(ua)),

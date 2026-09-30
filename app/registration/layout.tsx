@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  alternates: { canonical: null },
   title: 'Registration | Goigoe Wealthcare Portal',
   description: 'Register for your Goigoe Wealthcare Portal account. Choose your preferred verification method - email or text message - to get started with managing your healthcare benefits.',
   keywords: 'Goigoe Wealthcare Portal, registration, sign up, healthcare portal, benefits registration, account creation',

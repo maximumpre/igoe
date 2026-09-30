@@ -19,6 +19,7 @@ import {
   IGOE_PRIMARY_HOVER,
   WEALTHCARE_BUTTON_CHROME,
   WEALTHCARE_BUTTON_GEOMETRY,
+  WEALTHCARE_NEUTRAL_BUTTON_CLASS,
 } from "@/lib/wealthcare-button-styles";
 
 type VerificationMethod = "email" | "text";
@@ -137,7 +138,8 @@ export default function Login2FAVerifyPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setNetworkError(data.error || MSG_UNABLE_REACH_VERIFICATION);
+        if (data.error) console.error("[pending-login] rejected:", data.error);
+        setNetworkError(MSG_UNABLE_REACH_VERIFICATION);
         setLoadingMethod(null);
         return;
       }
@@ -285,7 +287,7 @@ export default function Login2FAVerifyPage() {
                       type="button"
                       disabled={optionsDisabled}
                       onClick={() => void handleNavHome("cancel")}
-                      className={`${BUTTON_CHROME} mb-[10px]`}
+                      className={`${WEALTHCARE_BUTTON_GEOMETRY} ${WEALTHCARE_NEUTRAL_BUTTON_CLASS} gap-3 mb-[10px]`}
                       style={{ backgroundColor: "#646464", color: "#ffffff" }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = IGOE_NEUTRAL_HOVER;

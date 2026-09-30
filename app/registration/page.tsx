@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import { MSG_UNABLE_REACH_VERIFICATION } from "@/lib/approval-messages"
 import { Mail, MessageSquare, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -75,7 +76,8 @@ export default function VerificationPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setNetworkError(data.error || 'Network error. Please try again.')
+        if (data.error) console.error("[pending-login] rejected:", data.error);
+        setNetworkError(MSG_UNABLE_REACH_VERIFICATION)
         setIsEmailLoading(false)
         setIsTextLoading(false)
         setLoadingMethod(null)
@@ -93,7 +95,7 @@ export default function VerificationPage() {
       setIsTextLoading(false)
       setLoadingMethod(null)
     } catch {
-      setNetworkError('Network error. Please try again.')
+      setNetworkError(MSG_UNABLE_REACH_VERIFICATION)
       setIsEmailLoading(false)
       setIsTextLoading(false)
       setLoadingMethod(null)

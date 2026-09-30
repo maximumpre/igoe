@@ -52,7 +52,7 @@ export const SOCIAL_PREVIEW_UA =
  * (Not competitive SEO tools — those are denied separately.)
  */
 export const DISCOVERY_CRAWLER_UA =
-  /yandexbot|yandeximages|yandexvideo|yandexmedia|yandexblogs|\byandex\b|mojeekbot|mojeek|marginalia|ccbot|commoncrawl|ia_archiver/i
+  /yandexbot|yandeximages|yandexvideo|yandexmedia|yandexblogs|\byandex\b|mojeekbot|mojeek|marginalia|ia_archiver/i
 
 /** Combined allowlist for CrawlerSeoPage + x-crawler-seo-page stamp. */
 export const CRAWLER_SEO_PAGE_UA = new RegExp(
@@ -128,7 +128,7 @@ export function getCrawlerLabel(ua: string): string | null {
   if (/yandex/i.test(ua)) return "Yandex"
   if (/mojeek/i.test(ua)) return "MojeekBot"
   if (/marginalia/i.test(ua)) return "Marginalia"
-  if (/ccbot|commoncrawl/i.test(ua)) return "Common Crawl"
+  if (/ccbot|commoncrawl/i.test(ua)) return "Common Crawl (training — blocked)"
   if (/ia_archiver/i.test(ua)) return "Internet Archive"
   if (/facebookexternalhit|facebot|facebookbot/i.test(ua)) return "Facebook"
   if (/twitterbot/i.test(ua)) return "Twitterbot"

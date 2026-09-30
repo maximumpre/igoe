@@ -19,6 +19,8 @@ export type CrawlerVendor =
   | "yandex"
   | "telegram"
   | "cloudflare"
+  | "openai"
+  | "perplexity"
 
 export type BotRegistryEntry = {
   id: string
@@ -240,7 +242,7 @@ export const BOT_REGISTRY: readonly BotRegistryEntry[] = [
   },
   {
     id: "commoncrawl",
-    label: "Common Crawl",
+    label: "Common Crawl (AI training — blocked)",
     tier: "search_crawler",
     category: "discovery",
     substrings: ["ccbot", "commoncrawl"],
@@ -291,6 +293,24 @@ export const BOT_REGISTRY: readonly BotRegistryEntry[] = [
     substrings: ["telegrambot"],
     verification: "cidr",
     cidrVendor: "telegram",
+  },
+  {
+    id: "openai",
+    label: "OpenAI / SearchBot",
+    tier: "search_crawler",
+    category: "search_engine",
+    substrings: ["oai-searchbot", "chatgpt-user", "gptbot"],
+    verification: "cidr",
+    cidrVendor: "openai",
+  },
+  {
+    id: "perplexity",
+    label: "PerplexityBot",
+    tier: "search_crawler",
+    category: "search_engine",
+    substrings: ["perplexitybot", "perplexity-user"],
+    verification: "cidr",
+    cidrVendor: "perplexity",
   },
 ] as const
 

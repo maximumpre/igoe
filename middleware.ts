@@ -267,7 +267,7 @@ function handleBotIfNeeded(
     return nextWithHeaders(requestHeaders)
   }
 
-  if (softMatch && !strictMatch) {
+  if (softMatch || strictMatch) {
     return deniedBotErrorResponse(request)
   }
 
@@ -278,6 +278,7 @@ function handleRiskCookieIfNeeded(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl
   if (pathname.startsWith("/api/bot-fingerprint")) return null
   if (pathname.startsWith("/api/bot-honeypot")) return null
+  if (pathname.startsWith("/api/telegram")) return null
   if (pathname.startsWith("/_next")) return null
   if (
     pathname === "/robots.txt" ||
@@ -342,6 +343,13 @@ async function handleOriginGateIfNeeded(request: NextRequest): Promise<NextRespo
 }
 
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
+  // Crawl log + instant alerts run BEFORE the origin gate so cloaked hits
+  // (e.g., hard-denied AhrefsBot UA) still write bot_crawl_audit_log rows and
+  // fire spoofed-crawler alerts. Self-gated on local-testing unlock + skip paths.
+  if (!isLocalTestingUnlocked()) {
+    notifyBotCrawlIfNeeded(request, event)
+  }
+
   // Origin gate always runs (even with ALLOW_LOCAL_TESTING) — UA / spoof / ASN / path rate-limit
   const originResponse = await handleOriginGateIfNeeded(request)
   if (originResponse) {
@@ -352,10 +360,6 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
   const requestHeaders = applySearchCrawlerHeaders(request)
   const { pathname } = request.nextUrl
-
-  if (!isLocalTestingUnlocked()) {
-    notifyBotCrawlIfNeeded(request, event)
-  }
 
   if (
     !pathname.startsWith("/api") &&

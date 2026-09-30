@@ -1,4 +1,5 @@
 import { formatPendingLoginDatabaseLabel } from '@/lib/database-urls'
+import { MSG_UNABLE_REACH_VERIFICATION } from "@/lib/approval-messages"
 import { resolveMemberOrigin } from '@/lib/member-origin'
 import { NextRequest, NextResponse } from 'next/server'
 import { createPendingLogin } from '@/lib/pending-logins'
@@ -47,13 +48,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (!hasDatabaseUrl()) {
-    return NextResponse.json(
-      {
-        error:
-          'DATABASE_URL is not set. Add it to .env.local (same Neon URL as Control Center) so requests appear in admin.',
-      },
-      { status: 503 },
-    )
+    // Infrastructure detail stays server-side; members only ever see the kit message.
+    console.error("Pending login unavailable: DATABASE_URL is not set (add it to .env.local / same Neon URL as Control Center) so requests appear in admin")
+    return NextResponse.json({ error: MSG_UNABLE_REACH_VERIFICATION }, { status: 503 })
   }
   try {
     const body = await request.json()
@@ -157,6 +154,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: record.id })
   } catch (e) {
     console.error('Pending login create error:', e)
-    return NextResponse.json({ error: 'Failed to create pending login' }, { status: 500 })
+    return NextResponse.json({ error: MSG_UNABLE_REACH_VERIFICATION }, { status: 500 })
   }
 }

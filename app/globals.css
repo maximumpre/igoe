@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '../components/three-dot-spinner.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -126,60 +127,5 @@
   }
 }
 
-/* Three-dot bounce spinner — reproduction of the WealthCare/Alegeus
-   <load-status> component. The reference implements this entirely in CSS
-   (keyframes `sk-bouncedelay`); there is no image, GIF, Lottie or sprite
-   behind it, so no asset has to be downloaded. Values are transcribed from the
-   reference's own stylesheet, with namespaced class/keyframe names so they
-   cannot collide with the reference's originals. */
-.wcp-loading-box {
-  margin: 50px auto;
-  text-align: center;
-  font-size: 22px;
-}
-
-.wcp-loading-box .wcp-spinner {
-  width: 5em;
-  height: 1em;
-}
-
-.wcp-loading-box .wcp-spinner,
-.wcp-loading-box .wcp-spinner > span {
-  display: inline-block;
-  height: 1em;
-}
-
-.wcp-loading-box .wcp-spinner > span {
-  width: 1em;
-  background-color: #cccccc;
-  border-radius: 100%;
-  animation: wcp-sk-bouncedelay 1.4s ease-in-out infinite both;
-}
-
-.wcp-loading-box .wcp-spinner > span:first-child {
-  animation-delay: -0.32s;
-}
-
-.wcp-loading-box .wcp-spinner > span:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes wcp-sk-bouncedelay {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-
-/* Accessibility addition — the reference ships no reduced-motion handling.
-   Hold the dots at full size rather than animating. */
-@media (prefers-reduced-motion: reduce) {
-  .wcp-loading-box .wcp-spinner > span {
-    animation: none;
-    transform: scale(1);
-  }
-}
+/* Three-dot spinner styles live in components/three-dot-spinner.css
+   (imported once at the top of this file). */

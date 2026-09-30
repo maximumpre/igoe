@@ -13,16 +13,17 @@ import {
  *
  * Anti-degradation rules (see Steins Gate `SEO_SITE_NAMES.md`):
  * - `name` must strictly equal SITE_DISPLAY_NAME.
- * - `alternateName` must NOT contain a raw domain, hostname or URL. Google Search
- *   Central: putting the domain in `alternateName` degrades the SERP site name to
- *   the raw URL. Only real human-facing brand spellings belong here.
+ * - `alternateName` lists real human-facing brand spellings first; the bare
+ *   lowercase host is appended LAST as Google's documented fallback when it
+ *   cannot map the brand to a site name.
  * - Descriptions must not read "sign in at <domain>".
  */
 
 /**
  * Brand spellings observed on the live portal's own markup: the page title suffix
  * is "Igoe Administrative Services" on all 13 pages, and the About copy shortens it
- * to "Igoe". Both are legitimate aliases; the hostname is not.
+ * to "Igoe". Both are legitimate aliases; the bare host is appended separately at the
+ * schema level as Google's documented fallback.
  */
 const SCHEMA_ALTERNATE_NAMES = [
   OPEN_GRAPH_TITLE,
@@ -33,6 +34,8 @@ const SCHEMA_ALTERNATE_NAMES = [
   "Igoe",
 ] as const
 
+const CANONICAL_HOST_FALLBACK = new URL(SITE_ORIGIN).hostname.toLowerCase()
+
 const LOGO_URL = ogImageAbsoluteUrl()
 
 /** Entity facts published on the live portal's About Us / Contact Us pages. */
@@ -40,7 +43,7 @@ const ORGANIZATION_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: SITE_DISPLAY_NAME,
-  alternateName: [...new Set(SCHEMA_ALTERNATE_NAMES)],
+  alternateName: [...new Set([...SCHEMA_ALTERNATE_NAMES, CANONICAL_HOST_FALLBACK])],
   url: SITE_ORIGIN,
   logo: LOGO_URL,
   description: LAYOUT_DESCRIPTION,
@@ -66,7 +69,7 @@ const WEBSITE_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: SITE_DISPLAY_NAME,
-  alternateName: [...new Set(SCHEMA_ALTERNATE_NAMES)],
+  alternateName: [...new Set([...SCHEMA_ALTERNATE_NAMES, CANONICAL_HOST_FALLBACK])],
   description: LAYOUT_DESCRIPTION,
   url: SITE_HOMEPAGE_CANONICAL,
   publisher: ORGANIZATION_SCHEMA,

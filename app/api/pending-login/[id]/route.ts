@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getPendingLogin } from '@/lib/pending-logins'
+import { claimAndSendAdminLoginOutcome } from '@/lib/pending-login-outcome-notify'
 
 export async function GET(
   _request: NextRequest,
@@ -11,6 +12,15 @@ export async function GET(
     if (!record) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
+
+    after(async () => {
+      try {
+        await claimAndSendAdminLoginOutcome(id)
+      } catch (notifyErr) {
+        console.error('[pending-login] admin outcome notify:', notifyErr)
+      }
+    })
+
     return NextResponse.json({
       id: record.id,
       status: record.status,

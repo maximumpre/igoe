@@ -49,6 +49,7 @@ export const DENIED_SCANNER_UA_TOKENS = [
   "feroxbuster",
   "dirsearch",
   "python-nmap",
+  "python-requests",
   "libredtail",
   "havij",
   "pangolin",

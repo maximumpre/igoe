@@ -2,6 +2,8 @@
  * SSR HTML twin of components/ErrorScreen.tsx for denied bots (no JS required).
  * Keep visual parity: Chrome-style ERR_NAME_NOT_RESOLVED.
  */
+import { SITE_DISPLAY_NAME, SITE_ORIGIN } from "@/lib/site-url"
+
 export function buildErrorScreenHtml(hostname: string): string {
   const safeHost = hostname.replace(/[<>&"']/g, "")
   return `<!DOCTYPE html>
@@ -10,10 +12,19 @@ export function buildErrorScreenHtml(hostname: string): string {
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex, nofollow"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="${SITE_DISPLAY_NAME}"/>
+<meta property="og:title" content="This site can't be reached"/>
+<meta property="og:description" content="ERR_NAME_NOT_RESOLVED — ${safeHost} took too long to respond."/>
+<meta property="og:url" content="${SITE_ORIGIN}"/>
+<meta property="og:image" content="${SITE_ORIGIN}/og-image.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png"/>
 <title>${safeHost}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{min-height:100vh;background:#202124;color:#9AA0A6;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:6rem 1rem}
+  html{background:#202124}
+  body{position:fixed;inset:0;overscroll-behavior:none;min-height:100vh;overflow-y:auto;overflow-x:hidden;background:#202124;color:#9AA0A6;font-family:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,"Roboto",sans-serif;padding:6rem 1rem}
   .wrap{max-width:42rem;margin:0 auto}
   img{display:block;margin-bottom:2rem;width:72px;height:72px;image-rendering:pixelated}
   h1{font-size:1.5rem;font-weight:600;color:#9AA0A6}

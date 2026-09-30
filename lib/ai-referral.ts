@@ -9,6 +9,9 @@
 export const CONTENT_SIGNAL =
   "search=yes, ai-train=no, use=reference" as const
 
+/** IETF standard-track preference header (unknown params are ignored by spec). */
+export const CONTENT_USAGE = "bots=y, search=y, train-ai=n" as const
+
 /** Training / model-ingest crawlers — block site-wide in robots.txt. */
 export const AI_TRAINING_CRAWLER_AGENTS = [
   "Google-Extended",
@@ -20,10 +23,16 @@ export const AI_TRAINING_CRAWLER_AGENTS = [
   "cohere-ai",
   "Diffbot",
   "omgili",
+  "Amazonbot",
+  "CCBot",
+  "commoncrawl",
+  "cohere-training-data-crawler",
+  "Coherebot",
+  "meta-externalagent",
 ] as const
 
 export const AI_TRAINING_CRAWLER_UA =
-  /google-extended|applebot-extended|gptbot|anthropic-ai|claudebot|bytespider|cohere-ai|diffbot|omgili/i
+  /google-extended|applebot-extended|gptbot|anthropic-ai|claudebot|bytespider|cohere-ai|diffbot|omgili|amazonbot|ccbot|commoncrawl|cohere-training-data-crawler|coherebot|meta-externalagent/i
 
 /**
  * User-triggered / citation crawlers — CrawlerSeoPage + Allow:/
@@ -42,11 +51,15 @@ export const AI_REFERENCE_CRAWLER_AGENTS = [
   "OAI-SearchBot",
   "DuckAssistBot",
   "YouBot",
-  "meta-externalagent",
+  "Claude-SearchBot",
+  "Claude-User",
+  "meta-webindexer",
+  "Amzn-SearchBot",
+  "Amzn-User",
 ] as const
 
 export const AI_REFERENCE_CRAWLER_UA =
-  /chatgpt-user|claude-web|perplexitybot|perplexity-user|oai-searchbot|duckassistbot|youbot|meta-externalagent/i
+  /chatgpt-user|claude-web|perplexitybot|perplexity-user|oai-searchbot|duckassistbot|youbot|claude-searchbot|claude-user|meta-webindexer|amzn-searchbot|amzn-user/i
 
 /** @deprecated Use AI_REFERENCE_CRAWLER_AGENTS — kept for older call sites during migrate. */
 export const AI_REFERRAL_CRAWLER_AGENTS = AI_REFERENCE_CRAWLER_AGENTS

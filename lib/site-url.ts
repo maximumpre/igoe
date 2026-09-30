@@ -1,6 +1,6 @@
 export const SITE_DISPLAY_NAME = "Goigoe Wealthcare" as const
 
-export const SITE_ORIGIN = "https://www.goigoewealthcare-portal.com" as const
+export const SITE_ORIGIN = "https://www.goigoes-wealthcareportal.com" as const
 
 export const SITE_URL = SITE_ORIGIN
 
@@ -8,9 +8,13 @@ export const SITE_URL = SITE_ORIGIN
  * Homepage canonical. Equals `SITE_ORIGIN` with NO trailing slash so the
  * head canonical, `og:url`, JSON-LD `url` and the sitemap `<loc>` all emit the
  * same byte-identical URL. Next normalises absolute metadata URLs for the root
- * path (`resolveAbsoluteUrlWithPathname` returns `origin` only), and the crawler
- * branch renders the string literally — a `${SITE_ORIGIN}/` value would put the
- * slash in sitemap/JSON-LD but not in `<head>`, a canonical/sitemap mismatch.
+ * path (`resolveAbsoluteUrlWithPathname` in `node_modules/next/dist/lib/metadata/
+ * resolvers/resolve-url.js` returns `result.origin` when `pathname === '/'`), and
+ * the crawler branch renders the string literally — a `${SITE_ORIGIN}/` value
+ * would put the slash in sitemap/JSON-LD but not in `<head>`, a canonical/sitemap
+ * mismatch. (Step 6 Sector A checklist shows `${SITE_ORIGIN}/`; the slashless form
+ * is the only one that stays byte-identical across all four surfaces — verified
+ * against the installed Next 15.2.8 source.)
  */
 export const SITE_HOMEPAGE_CANONICAL = SITE_ORIGIN
 
@@ -20,7 +24,8 @@ export const SITE_SITEMAP_URL = `${SITE_ORIGIN}/sitemap.xml` as const
 
 export const CANONICAL_HOST = new URL(SITE_ORIGIN).hostname
 
-export const INDEXNOW_KEY = "0729b49c6ba04a60ac5d7bd21bbc5757" as const
+export const INDEXNOW_KEY =
+  process.env.INDEXNOW_KEY?.trim() ?? "34a14e1f1ab740b79fbc95983db1f85a"
 
 export const DEFAULT_SITE_TITLE = "Goigoe Wealthcare Member Login" as const
 

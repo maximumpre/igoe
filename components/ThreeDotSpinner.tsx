@@ -6,7 +6,8 @@
  *
  * The reference implements it entirely in CSS (keyframes `sk-bouncedelay`); there
  * is no image, GIF, Lottie or sprite behind it, so nothing has to be downloaded.
- * The styles live in app/globals.css under the `wcp-` namespace.
+ * The styles live in components/three-dot-spinner.css (imported once from
+ * app/globals.css under the `wcp-` namespace).
  *
  * Measured against the live reference at 1440px: three #ccc circles ~22px
  * diameter, ~35px apart, horizontally centred in the content column.

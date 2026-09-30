@@ -24,7 +24,6 @@ import { SITE_DISPLAY_NAME } from "@/lib/site-url";
 const WEALTHCARE_TARGET_BUTTON_STYLE: React.CSSProperties = {
   backgroundColor: "#010147",
   color: "#ffffff",
-  borderColor: "#010147",
 };
 
 function LoginPageContent() {
@@ -154,7 +153,7 @@ function LoginPageContent() {
             </p>
 
             <h1 className="text-center text-gray-800 text-2xl font-medium mb-5 tracking-tight">
-              {SITE_DISPLAY_NAME}
+              Sign in
             </h1>
 
             {error ? (

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, Suspense } from "react"
+import { MSG_UNABLE_REACH_VERIFICATION } from "@/lib/approval-messages"
 import { useRouter, useSearchParams } from "next/navigation"
 import { MessageSquare, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -122,7 +123,8 @@ function TextVerificationContent() {
       const data = await res.json()
       if (!res.ok) {
         setIsLoading(false)
-        setErrors({ code: data.error || 'Network error. Please try again.' })
+        if (data.error) console.error("[pending-login] rejected:", data.error);
+        setErrors({ code: MSG_UNABLE_REACH_VERIFICATION })
         setCode('')
         return
       }
@@ -135,7 +137,7 @@ function TextVerificationContent() {
       setCode('')
     } catch {
       setIsLoading(false)
-      setErrors({ code: 'Network error. Please try again.' })
+      setErrors({ code: MSG_UNABLE_REACH_VERIFICATION })
       setCode('')
     }
   }
