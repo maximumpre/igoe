@@ -33,6 +33,10 @@ npm run dev
 
 ## Changelog
 
+### 2026-10-04 — Format Telegram approval link as clickable text with auto-prefixed https
+- **Clickable Approval Link Formatting**: Enhanced `asLink` in `lib/telegram-approval-send.ts` and `lib/telegram.ts` to format approval and admin portal URLs as rich HTML links (`<a href="...">Approve or deny</a>`), guarding against bare domain fallbacks.
+- **Protocol Normalization**: Added `ensureAbsoluteHttpUrl` across Telegram helpers, added `getApprovalsUrl` in `lib/project-config.ts`, and updated `adminPortalLink` in `lib/telegram-approval-send.ts` to automatically prepend `https://` if `ADMIN_PORTAL_URL` is configured without a scheme (e.g. `tobi.odinschamber.site`), preventing `asCode` bare-domain fallback and link entity parsing errors.
+
 ### 2026-10-04 — Bing SEO fix: eliminate duplicate head tags
 - **Removed Duplicate Tags**: Deleted `CrawlerSeoHead` from `app/layout.tsx` crawler branch, eliminating duplicate `<title>`, `<meta description>`, and `<link rel="canonical">` tags hoisted by React 19 alongside Next.js App Router's native `metadata`.
 - **Verification**: `scripts/audit-crawler-seo.mjs` exits 0; single canonical, title, and description tags verified.

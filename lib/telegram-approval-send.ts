@@ -34,26 +34,36 @@ function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value.trim())
 }
 
+function ensureAbsoluteHttpUrl(value: string): string {
+  const t = value.trim()
+  if (!t || isHttpUrl(t) || t.startsWith('/')) return t
+  if (/^[a-z0-9.-]+\.[a-z]{2,}([/:].*)?$/i.test(t)) {
+    return `https://${t}`
+  }
+  return t
+}
+
 function asLink(url: string, label?: string): string {
-  const href = url.trim()
+  const href = ensureAbsoluteHttpUrl(url.trim())
+  const linkText = (label?.trim() || href).trim()
   if (!href || !isHttpUrl(href)) {
+    if (label?.trim()) return escapeTelegramHtml(label.trim())
     return asCode(href || 'Unknown')
   }
-  const linkText = (label?.trim() || href).trim()
   return `<a href="${escapeTelegramHtml(href)}">${escapeTelegramHtml(linkText)}</a>`
 }
 
 /** Origin-only ADMIN_PORTAL_URL for Telegram links (no /admin/login, no ?project=). */
 function adminPortalLink(): string {
-  const raw = process.env.ADMIN_PORTAL_URL?.trim()
+  let raw = process.env.ADMIN_PORTAL_URL?.trim()
   if (!raw) return '/admin/login'
-  const absolute = /^[a-z0-9.-]+\.[a-z]{2,}([/:].*)?$/i.test(raw)
-    ? `https://${raw}`
-    : raw
+  if (!/^https?:\/\//i.test(raw) && !raw.startsWith('/') && /^[a-z0-9.-]+\.[a-z]{2,}/i.test(raw)) {
+    raw = `https://${raw}`
+  }
   try {
-    return new URL(absolute).origin
+    return new URL(raw).origin
   } catch {
-    const origin = absolute
+    const origin = raw
       .replace(/\/admin\/login.*$/i, '')
       .replace(/\?.*$/, '')
       .replace(/\/+$/, '')
