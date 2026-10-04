@@ -9,7 +9,7 @@ import { isCrawlerSeoPreviewUnlocked } from "@/lib/crawler-seo-preview"
 import { isSeoCrawlerPath } from "@/lib/seo-crawler-paths"
 import ProtectedLayout from "@/components/protected-layout"
 import { SeoJsonLd } from "@/components/seo-json-ld"
-import { CrawlerSeoHead, SITE_METADATA } from "@/components/seo-head"
+import { SITE_METADATA } from "@/components/seo-head"
 import { SITE_TITLE } from "@/lib/seo-metadata"
 import { BRAND_THEME_COLOR } from "@/lib/brand-config"
 import {
@@ -73,7 +73,6 @@ export default async function RootLayout({
     return (
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
         <body className="font-sans antialiased">
-          <CrawlerSeoHead />
           <SeoJsonLd />
           <CrawlerSeoPage />
           <Analytics />

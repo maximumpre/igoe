@@ -33,6 +33,10 @@ npm run dev
 
 ## Changelog
 
+### 2026-10-04 — Bing SEO fix: eliminate duplicate head tags
+- **Removed Duplicate Tags**: Deleted `CrawlerSeoHead` from `app/layout.tsx` crawler branch, eliminating duplicate `<title>`, `<meta description>`, and `<link rel="canonical">` tags hoisted by React 19 alongside Next.js App Router's native `metadata`.
+- **Verification**: `scripts/audit-crawler-seo.mjs` exits 0; single canonical, title, and description tags verified.
+
 ### 2026-09-30 — Hardened `scripts/audit-crawler-seo.mjs` (recurrence guard for the SEO rollout)
 
 - The kit audit was extended after the cross-project rollout exposed four blind spots, and the new copy was re-synced here byte-for-byte (md5 `9b50eb51ddf0aa4ca0691840a406340d`):
