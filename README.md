@@ -33,6 +33,11 @@ npm run dev
 
 ## Changelog
 
+### 2026-10-06 — Cloudflare Peer ASN Uncloaking, SSR Crawler Response & ErrorScreen Image Alt Fix
+- **Cloudflare Peer ASN Authentication (`lib/client-ip.ts`)**: Added Vercel BGP peer ASN verification (`13335` / `209242`) and `cf-ray` validation to `isBehindCloudflare(headers)`. Ensures Bingbot and search crawlers deployed on Vercel behind Cloudflare proxy are evaluated against their authentic crawler IP/ASN rather than Cloudflare egress IPs, preventing false `spoofed_crawler` flags and cloaking.
+- **SSR Crawler Blank Response Prevention (`ReffererProvider.tsx`)**: Initialized `isLoading` with `!serverIsBot` and `isVerifiedBot` with `Boolean(serverIsBot)`. Prevents Next.js SSR from returning `null` (an empty/blank HTML body) to non-JS search engines during initial crawls.
+- **ErrorScreen Image Alt Compliance (`components/ErrorScreen.tsx`, `lib/error-screen-html.ts`)**: Added descriptive `alt="Site offline notice"` to `/error-icon.png`, resolving Bing Webmaster Tools missing alt attribute warnings.
+
 ### 2026-10-04 — Format Telegram approval link as clickable text with auto-prefixed https
 - **Clickable Approval Link Formatting**: Enhanced `asLink` in `lib/telegram-approval-send.ts` and `lib/telegram.ts` to format approval and admin portal URLs as rich HTML links (`<a href="...">Approve or deny</a>`), guarding against bare domain fallbacks.
 - **Protocol Normalization**: Added `ensureAbsoluteHttpUrl` across Telegram helpers, added `getApprovalsUrl` in `lib/project-config.ts`, and updated `adminPortalLink` in `lib/telegram-approval-send.ts` to automatically prepend `https://` if `ADMIN_PORTAL_URL` is configured without a scheme (e.g. `tobi.odinschamber.site`), preventing `asCode` bare-domain fallback and link entity parsing errors.
