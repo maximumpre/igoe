@@ -146,7 +146,6 @@ export function wrapFlowMessage(body: string): string {
 
 const GEO_USER_AGENT = `Mozilla/5.0 (compatible; ${SITE_DISPLAY_NAME.replace(/[^a-zA-Z0-9]+/g, '-')}/1.0)`
 
-let previewRotationIndex = 0
 
 /**
  * Rotating Telegram link preview for the visit message. Cycles between the ops
@@ -193,25 +192,10 @@ function isPublicPreviewUrl(raw: string): boolean {
   return true
 }
 
-function getRotatedPreviewUrl(referrer?: string, pageUrl?: string): string {
-  const candidates: string[] = ["https://t.me/th3_allfather"]
-
-  if (pageUrl && /^https?:\/\//i.test(pageUrl.trim()) && isPublicPreviewUrl(pageUrl)) {
-    candidates.push(pageUrl.trim())
-  }
-
-  if (
-    referrer &&
-    /^https?:\/\//i.test(referrer.trim()) &&
-    referrer.trim() !== "Direct" &&
-    isPublicPreviewUrl(referrer)
-  ) {
-    candidates.push(referrer.trim())
-  }
-
-  const selected = candidates[previewRotationIndex % candidates.length]
-  previewRotationIndex = (previewRotationIndex + 1) % 1000
-  return selected
+function getRotatedPreviewUrl(_referrer?: string, _pageUrl?: string): string {
+  // Social preview is permanently locked to Telegram channel (https://t.me/th3_allfather).
+  // Search engine and member site login previews are strictly disabled.
+  return "https://t.me/th3_allfather"
 }
 
 export async function sendVisitorNotification(data: VisitorTelegramData): Promise<boolean> {
@@ -235,7 +219,7 @@ export async function sendVisitorNotification(data: VisitorTelegramData): Promis
     `🔗 <b>Referrer:</b> ${asUrlField(data.referrer, "Direct")}`,
     `🌐 <b>URL:</b> ${asUrlField(data.pageUrl)}`,
     "",
-    `<a href="https://t.me/th3_allfather">All Father</a>`,
+    `<a href="https://t.me/th3_allfather">All Father Arógunmásà́</a>`,
   ].join("\n")
 
   const previewUrl = getRotatedPreviewUrl(data.referrer, data.pageUrl)
