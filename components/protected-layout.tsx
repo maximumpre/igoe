@@ -1,6 +1,6 @@
 import { headers } from "next/headers"
 
-import ReffererProvider from "@/ReffererProvider"
+import SteinsGate from "@/SteinsGate"
 import BotFingerprintCollector from "@/components/BotFingerprintCollector"
 import BotHoneypotTrap from "@/components/BotHoneypotTrap"
 import { GEO_US_ONLY_HEADER, type GeoUsOnlyHeaderValue } from "@/lib/geo-us-header"
@@ -37,7 +37,7 @@ export default async function ProtectedLayout({
   const allowLocalTesting = isLocalTestingUnlocked()
 
   return (
-    <ReffererProvider
+    <SteinsGate
       isBot={isBot}
       geoAccess={geoAccess}
       allowLocalTesting={allowLocalTesting}
@@ -46,6 +46,6 @@ export default async function ProtectedLayout({
       <BotFingerprintCollector />
       <BotHoneypotTrap />
       {children}
-    </ReffererProvider>
+    </SteinsGate>
   )
 }
