@@ -33,6 +33,14 @@ npm run dev
 
 ## Changelog
 
+### 2026-10-25 — Homepage search-crawler fail-open (Bing ErrorScreen)
+
+- **Completed:** Unverified Google/Bing UA on `/` or `/crawler-seo.html` now returns `allow` (crawler twin) instead of hard-cloak `spoofed_crawler` → ErrorScreen + `X-Robots-Tag: noindex`. Sensitive paths still cloak.
+- **Files affected:** `lib/bot-verification/origin-request-gate.ts` (or `src/lib/...`), `README.md`.
+- **Verification:** In-scope fleet re-scan: fail-open present; local gate allow on `/` for spoofed Bingbot UA.
+- **Outcome:** Homepage Bing/Google indexing no longer dies on IP/DoH miss behind CF.
+
+
 ### 2026-10-06 — Cloudflare Peer ASN Uncloaking, SSR Crawler Response & ErrorScreen Image Alt Fix
 - **Cloudflare Peer ASN Authentication (`lib/client-ip.ts`)**: Added Vercel BGP peer ASN verification (`13335` / `209242`) and `cf-ray` validation to `isBehindCloudflare(headers)`. Ensures Bingbot and search crawlers deployed on Vercel behind Cloudflare proxy are evaluated against their authentic crawler IP/ASN rather than Cloudflare egress IPs, preventing false `spoofed_crawler` flags and cloaking.
 - **SSR Crawler Blank Response Prevention (`ReffererProvider.tsx`)**: Initialized `isLoading` with `!serverIsBot` and `isVerifiedBot` with `Boolean(serverIsBot)`. Prevents Next.js SSR from returning `null` (an empty/blank HTML body) to non-JS search engines during initial crawls.
