@@ -55,14 +55,26 @@ export function isPrivateOrLocalIp(ip: string): boolean {
   return false
 }
 
-/** Prefer platform headers; fail open when ASN is unknown (no outbound geo lookup). */
+/** True when this process is actually running on Vercel. */
+function isOnVercel(): boolean {
+  return process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV)
+}
+
+/**
+ * Request ASN — PLATFORM HEADERS ONLY.
+ *
+ * This value is an authentication input: `isOfficialSearchCrawlerIp` returns
+ * `true` immediately when the ASN is one of Google's / Bing's / Apple's, so a
+ * spoofable ASN is a total bypass of the CIDR verification.
+ *
+ * `x-asn` and `cf-ipasnum` are client-settable and were removed. Only the
+ * Vercel-owned header is read, and only when this process runs on Vercel.
+ * If Vercel does not populate it the ASN is `null` and the caller falls through
+ * to the published-CIDR check or FCrDNS.
+ */
 export function getRequestAsn(request: NextRequest): string | null {
-  const raw =
-    request.headers.get("x-vercel-ip-as-number") ||
-    request.headers.get("x-asn") ||
-    request.headers.get("cf-ipasnum") ||
-    ""
-  return normalizeAsn(raw)
+  if (!isOnVercel()) return null
+  return normalizeAsn(request.headers.get("x-vercel-ip-as-number") || "")
 }
 
 export function isOriginBlockedHostingAsn(asn: string | null | undefined): boolean {

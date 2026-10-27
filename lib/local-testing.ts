@@ -12,13 +12,15 @@ export function isLocalhostHost(host: string | null | undefined): boolean {
   return LOCALHOST_HOSTS.has(hostname) || hostname.endsWith(".localhost")
 }
 
+/**
+ * `ALLOW_LOCAL_TESTING` is the only switch. The `host` argument is accepted for
+ * call-site compatibility but never unlocks on its own: a localhost hostname
+ * without the env flag stays locked.
+ */
 export function isLocalTestingUnlocked(host?: string | null): boolean {
+  void host
   if (process.env.VERCEL_ENV === "production") {
     return false
-  }
-
-  if (host && isLocalhostHost(host)) {
-    return true
   }
 
   const value = process.env.ALLOW_LOCAL_TESTING?.trim().toLowerCase()

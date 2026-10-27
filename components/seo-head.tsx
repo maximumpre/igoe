@@ -16,8 +16,9 @@ const OG_IMAGE_URL = ogImageAbsoluteUrl()
  * Two consumers:
  * 1. `app/layout.tsx` spreads this into the exported `metadata` — drives the
  *    human landing.
- * 2. `<CrawlerSeoHead />` renders the same values as literal elements for the
- *    crawler branch.
+ * 2. The crawler branch has no page segment, so Next emits no head for it.
+ *    `CrawlerSeoHead` was removed (2026-10-04, duplicate tags) and is not
+ *    re-added here: a JSX `<title>` is banned by the crawler audit.
  *
  * Why (2) exists: when the root layout early-returns the CrawlerSeoPage branch it
  * does not render the page segment, and Next's metadata pipeline emits nothing —
@@ -76,36 +77,4 @@ export const SITE_METADATA: Metadata = {
     description: SITE_DESCRIPTION,
     images: [OG_IMAGE_URL],
   },
-}
-
-/** Explicit head elements for the crawler branch. React 19 hoists these into <head>. */
-export function CrawlerSeoHead() {
-  return (
-    <>
-      <title>{SITE_TITLE}</title>
-      <meta name="description" content={SITE_DESCRIPTION} />
-      <meta name="keywords" content={SITE_KEYWORDS.join(",")} />
-      <meta name="application-name" content={SITE_DISPLAY_NAME} />
-      <meta name="author" content={SITE_DISPLAY_NAME} />
-      <meta name="robots" content="index, follow" />
-      <meta name="googlebot" content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />
-      <link rel="canonical" href={SITE_ORIGIN} />
-
-      <meta property="og:type" content="website" />
-      <meta property="og:locale" content="en_US" />
-      <meta property="og:url" content={SITE_ORIGIN} />
-      <meta property="og:site_name" content={SITE_DISPLAY_NAME} />
-      <meta property="og:title" content={SITE_TITLE} />
-      <meta property="og:description" content={SITE_DESCRIPTION} />
-      <meta property="og:image" content={OG_IMAGE_URL} />
-      <meta property="og:image:width" content={String(OG_IMAGE.width)} />
-      <meta property="og:image:height" content={String(OG_IMAGE.height)} />
-      <meta property="og:image:alt" content={OG_IMAGE.alt} />
-
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={SITE_TITLE} />
-      <meta name="twitter:description" content={SITE_DESCRIPTION} />
-      <meta name="twitter:image" content={OG_IMAGE_URL} />
-    </>
-  )
 }

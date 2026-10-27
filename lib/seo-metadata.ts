@@ -2,7 +2,11 @@ import { LAYOUT_DESCRIPTION } from "@/lib/meta-description"
 import { buildSiteKeywords } from "@/lib/seo-keywords"
 import { DEFAULT_SITE_TITLE, CANONICAL_HOST, SITE_DISPLAY_NAME } from "@/lib/site-url"
 
-export const SITE_TITLE = `${SITE_DISPLAY_NAME} Member Login`
+/**
+ * Step 5 A13 title shape: `<action> | {SITE_DISPLAY_NAME}` (30–60 chars).
+ * A brand-only title is stripped by Google and a delimiter-less title is rejected by the audit.
+ */
+export const SITE_TITLE = `Member Sign In | ${SITE_DISPLAY_NAME}`
 
 export const SITE_DESCRIPTION = LAYOUT_DESCRIPTION
 

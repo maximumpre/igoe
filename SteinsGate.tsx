@@ -6,73 +6,9 @@ import { usePathname } from "next/navigation"
 import ErrorScreen from "@/components/ErrorScreen"
 import type { GeoUsOnlyHeaderValue } from "@/lib/geo-us-header"
 import { AI_REFERRAL_HOSTS } from "@/lib/ai-referral"
-import { ALLOWED_BACKLINK_HOSTS } from "@/lib/project-config"
+import { isAllowedSearchOrBacklinkReferrer } from "@/lib/allowed-referrer"
 import { isUngatedSeoPath } from "@/lib/seo-public-paths"
 import { detectBotType, getSpecificBotType, isDeniedBotUserAgent, isTrustedCrawlerUserAgent } from "@/utils/botDetection"
-
-const ALLOWED_REFERRER_HOSTS = [
-  // Google Core & Global ccTLDs + Ads
-  "google.com",
-  "www.google.com",
-  "google.co.uk",
-  "google.de",
-  "google.fr",
-  "google.es",
-  "google.it",
-  "google.ca",
-  "google.com.au",
-  "google.co.in",
-  "google.com.br",
-  "googleadservices.com",
-
-  // Microsoft Bing & MSN
-  "bing.com",
-  "www.bing.com",
-  "bing.net",
-  "msn.com",
-  "www.msn.com",
-
-  // Yahoo Core & International
-  "yahoo.com",
-  "search.yahoo.com",
-  "ca.search.yahoo.com",
-  "uk.search.yahoo.com",
-  "de.search.yahoo.com",
-  "yahoo.co.jp",
-
-  // Major Privacy & General Search Engines
-  "duckduckgo.com",
-  "brave.com",
-  "search.brave.com",
-  "ecosia.org",
-  "startpage.com",
-  "qwant.com",
-  "kagi.com",
-  "ask.com",
-  "aol.com",
-
-  // Regional Search Leaders
-  "baidu.com",
-  "yandex.com",
-  "yandex.ru",
-  "yandex.by",
-  "yandex.kz",
-  "seznam.cz",
-  "naver.com",
-  "sogou.com",
-
-  // Independent & Metasearch Engines
-  "mojeek.com",
-  "swisscows.com",
-  "presearch.com",
-  "dogpile.com",
-  "webcrawler.com",
-  "lycos.com",
-  "gibiru.com",
-
-  // AI Referral Platforms
-  ...AI_REFERRAL_HOSTS,
-]
 
 export const BotAccessContext = createContext(false)
 
@@ -114,81 +50,13 @@ function setLandingAccessCookie(granted: boolean) {
 
 const GOOGLEBOT_VERIFY_TIMEOUT_MS = 10000
 
-const normalizeReferrerValue = (value: string) => value.toLowerCase().replace(/^www\./, "")
-
-const normalizeOrigin = (value: string) => value.toLowerCase().replace(/^(https?:\/\/)www\./, "$1")
-
-const ALLOWED_ANDROID_APP_PACKAGES = [
-  "com.google.android.googlequicksearchbox",
-  "com.google.android.apps.searchlite",
-  "com.google.android.gm",
-  "com.microsoft.bing",
-  "com.microsoft.emmx",
-  "com.duckduckgo.mobile.android",
-  "com.android.chrome",
-  "org.mozilla.firefox",
-  "com.sec.android.app.sbrowser",
-  "com.brave.browser",
-  "com.opera.browser",
-  "com.yandex.browser",
-  "com.yandex.searchapp",
-  "com.yahoo.mobile.client.android.search",
-]
-
+/**
+ * Search-referrer allowlist lives in `lib/allowed-referrer.ts` (shared with middleware).
+ * The page origin is passed so a same-origin reload can never grant entry.
+ */
 function isFromAllowedSource(referrer: string): boolean {
-  if (!referrer) return false
-  const trimmed = referrer.trim()
-
-  if (trimmed.startsWith("android-app://")) {
-    const pkg = trimmed.slice("android-app://".length).split("/")[0].toLowerCase()
-    return ALLOWED_ANDROID_APP_PACKAGES.some(
-      (allowed) => pkg === allowed || pkg.startsWith(`${allowed}.`),
-    )
-  }
-
-  if (!trimmed.startsWith("http")) return false
-  try {
-    const referrerUrl = new URL(trimmed)
-    const referrerOrigin = normalizeOrigin(referrerUrl.origin)
-
-    // Reload / ErrorScreen reload sets same-origin referrer — must not grant search entry.
-    if (typeof window !== "undefined") {
-      const pageOrigin = normalizeOrigin(window.location.origin)
-      if (referrerOrigin === pageOrigin) return false
-    }
-
-    const referrerHostname = normalizeReferrerValue(referrerUrl.hostname)
-    const referrerHost = normalizeReferrerValue(referrerUrl.host)
-
-    // Search engines (shared) + per-project SEO backlinks / referring domains.
-    const allAllowed = [...ALLOWED_REFERRER_HOSTS, ...ALLOWED_BACKLINK_HOSTS]
-
-    return allAllowed.some((allowed) => {
-      const normalizedAllowed = allowed.toLowerCase()
-      const isHostnameOnly =
-        !normalizedAllowed.includes("://") && !normalizedAllowed.includes(":")
-
-      if (isHostnameOnly) {
-        const allowedHostname = normalizeReferrerValue(normalizedAllowed)
-        return (
-          referrerHostname === allowedHostname ||
-          referrerHostname.endsWith(`.${allowedHostname}`)
-        )
-      }
-
-      const allowedUrl =
-        normalizedAllowed.startsWith("http://") || normalizedAllowed.startsWith("https://")
-          ? new URL(normalizedAllowed)
-          : new URL(`http://${normalizedAllowed}`)
-
-      return (
-        referrerHost === normalizeReferrerValue(allowedUrl.host) ||
-        referrerOrigin === normalizeOrigin(allowedUrl.origin)
-      )
-    })
-  } catch {
-    return false
-  }
+  const pageOrigin = typeof window !== "undefined" ? window.location.origin : null
+  return isAllowedSearchOrBacklinkReferrer(referrer, pageOrigin)
 }
 
 export type SteinsGateProps = {

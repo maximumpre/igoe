@@ -4,7 +4,7 @@ import {
   CONTENT_SIGNAL,
   CONTENT_USAGE,
 } from "@/lib/ai-referral"
-import { SITE_ORIGIN } from "@/lib/site-url"
+import { CANONICAL_HOST, SITE_ORIGIN } from "@/lib/site-url"
 
 /**
  * Landing-only crawl: search + AI reference Allow:/; AI training Disallow:/.
@@ -61,7 +61,7 @@ export function GET(): Response {
     ...AI_REFERENCE_CRAWLER_AGENTS.map((ua) => allowGroup(ua)),
     ...AI_TRAINING_CRAWLER_AGENTS.map((ua) => blockGroup(ua)),
     `Sitemap: ${SITE_ORIGIN}/sitemap.xml`,
-    `Host: ${SITE_ORIGIN}`,
+    `Host: ${CANONICAL_HOST}`,
     "",
   ].join("\n")
 

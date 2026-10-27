@@ -288,6 +288,47 @@ const PROBLEM_HOWTO_KEYWORDS = [
   "FSA claim denied appeal",
 ] as const
 
+/**
+ * NEW (Step 5, 2026-10-27) — live search-demand cluster.
+ * Harvested by `scripts/harvest-seo-intelligence.mjs` (zero-key Google / Bing /
+ * DuckDuckGo suggest, `seo-intelligence.json`). Only brand-bearing login, portal,
+ * benefits, card and customer-service suggestions are kept. Off-brand suggestions
+ * ("google login") and unverified product acronyms ("igoe lsa login") were rejected.
+ * Maps to Cluster 3 (auth intents), Cluster 2 (benefits) and Cluster 6 (self-service).
+ */
+const HARVEST_SUGGEST_KEYWORDS = [
+  "igoe login hsa",
+  "igoe login employee",
+  "igoe login app",
+  "igoe employer login",
+  "flex igoe login",
+  "igoe fsa login employee",
+  "igoe participant login",
+  "igoe cobra login employee",
+  "my igoe login",
+  "igoe member login",
+  "igoe fsa login app",
+  "igoe portal login",
+  "igoe employee login",
+  "igoe employer portal",
+  "igoe employer",
+  "igoe benefits card login",
+  "igoe benefits card balance",
+  "igoe benefits",
+  "igoe wealthcare portal",
+  "igoe customer service number",
+  "igoe customer service hours",
+  "igoe customer service",
+  "igoe customer support",
+  "igoe login",
+  "igoe login fsa",
+  "igoe login cobra",
+  "igoe login online",
+  "igoe login portal",
+  "igoe login account",
+  "igoe login benefits",
+] as const
+
 export function buildSiteKeywords(): string[] {
   return mergeKeywords(
     BRAND_SLUG_LADDER,
@@ -301,5 +342,6 @@ export function buildSiteKeywords(): string[] {
     PLATFORM_KEYWORDS,
     PARTICIPANT_APP_KEYWORDS,
     PROBLEM_HOWTO_KEYWORDS,
+    HARVEST_SUGGEST_KEYWORDS,
   )
 }
