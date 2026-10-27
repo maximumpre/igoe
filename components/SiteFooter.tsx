@@ -14,6 +14,7 @@ const FOOTER_LINKS = {
   terms: `${PORTAL_ORIGIN}/Page/TermsOfUse`,
   privacy: `${PORTAL_ORIGIN}/Page/PrivacyPolicy`,
   siteMap: `${PORTAL_ORIGIN}/Page/SiteMap`,
+  participantPhone: "tel:+18006338818",
 } as const
 
 export function SiteFooter() {
@@ -33,6 +34,13 @@ export function SiteFooter() {
           <Link href={FOOTER_LINKS.privacy} className="text-gray-700 hover:text-gray-900">
             PRIVACY POLICY
           </Link>
+          <a
+            href={FOOTER_LINKS.participantPhone}
+            className="text-gray-700 hover:text-gray-900"
+            aria-label="Call Igoe participant services at 800-633-8818"
+          >
+            (800) 633-8818
+          </a>
         </nav>
         <p className="text-center text-sm text-gray-600 mb-2">
           Copyright © 2024 Igoe Administrative Services. All Rights Reserved.

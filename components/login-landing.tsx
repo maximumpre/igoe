@@ -283,7 +283,7 @@ function LoginPageContent() {
   );
 }
 
-export default function LoginPage() {
+export default function LoginLanding() {
   return (
     <Suspense fallback={null}>
       <LoginPageContent />

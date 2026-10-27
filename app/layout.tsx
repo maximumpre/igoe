@@ -1,12 +1,7 @@
-import { cookies, headers } from "next/headers"
 import type { Metadata } from "next"
 import type React from "react"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import CrawlerSeoPage from "@/components/CrawlerSeoPage"
-import { isCrawlerSeoPageUA } from "@/lib/bot-detection"
-import { isCrawlerSeoPreviewUnlocked } from "@/lib/crawler-seo-preview"
-import { isSeoCrawlerPath } from "@/lib/seo-crawler-paths"
 import ProtectedLayout from "@/components/protected-layout"
 import { SeoJsonLd } from "@/components/seo-json-ld"
 import { SITE_METADATA } from "@/components/seo-head"
@@ -14,7 +9,6 @@ import { SITE_TITLE } from "@/lib/seo-metadata"
 import { BRAND_THEME_COLOR } from "@/lib/brand-config"
 import {
   SITE_DISPLAY_NAME,
-  SITE_HOMEPAGE_CANONICAL,
   SITE_ORIGIN,
 } from "@/lib/site-url"
 import "./globals.css"
@@ -54,33 +48,11 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic"
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const headersList = await headers()
-  const cookieStore = await cookies()
-  const pathname = headersList.get("x-pathname") || "/"
-  const ua = headersList.get("user-agent")
-  const isCrawlerSeo =
-    isCrawlerSeoPreviewUnlocked() ||
-    headersList.get("x-crawler-seo-page") === "1" ||
-    cookieStore.get("x-crawler-seo-page")?.value === "1" ||
-    (isCrawlerSeoPageUA(ua) && isSeoCrawlerPath(pathname))
-
-  if (isCrawlerSeo) {
-    return (
-      <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-        <body className="font-sans antialiased">
-          <SeoJsonLd />
-          <CrawlerSeoPage />
-          <Analytics />
-        </body>
-      </html>
-    )
-  }
-
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">

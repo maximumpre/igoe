@@ -1,0 +1,310 @@
+---
+/**
+ * Static SEO page for allowlisted search/social agents.
+ * DOM: header → breadcrumb → login (H1 + readonly form) → rich copy → FAQ → Related searches → footer.
+ */
+import "../../app/globals.css"
+import "../styles/astro-font.css"
+import SeoHead from "../components/seo-head.astro"
+import { SeoJsonLd } from "@/components/seo-json-ld"
+import { PAGE_H1_HEADING } from "@/lib/seo-keywords"
+import { SITE_VISIBLE_KEYWORDS } from "@/lib/seo-metadata"
+import { SITE_DISPLAY_NAME, SITE_HOMEPAGE_CANONICAL } from "@/lib/site-url"
+import { GOIGOE_HANDSHAKE_URL } from "@/lib/auth-redirect"
+import { BRAND_LOGO_SRC } from "../lib/brand-images"
+
+const visibleKeywords = SITE_VISIBLE_KEYWORDS.join(", ")
+const PORTAL_ORIGIN = new URL(GOIGOE_HANDSHAKE_URL).origin
+const FORGOT_USERNAME_URL = `${PORTAL_ORIGIN}/Authentication/UserNameRetrieval`
+const FORGOT_PASSWORD_URL = `${PORTAL_ORIGIN}/Page/ForgotPassword`
+const REGISTRATION_URL = `${PORTAL_ORIGIN}/Page/Registration`
+const PARTICIPANT_SUPPORT_TEL = "tel:+18006338818"
+const FOOTER = {
+  contact: `${PORTAL_ORIGIN}/Page/ContactUs`,
+  about: `${PORTAL_ORIGIN}/Page/AboutUs`,
+  terms: `${PORTAL_ORIGIN}/Page/TermsOfUse`,
+  privacy: `${PORTAL_ORIGIN}/Page/PrivacyPolicy`,
+  siteMap: `${PORTAL_ORIGIN}/Page/SiteMap`,
+} as const
+
+const FAQS = [
+  {
+    question: "How do I sign in to my Goigoe Wealthcare account?",
+    answer:
+      "Enter your UserId and Password in the sign-in form and select Sign in. The portal then opens your health savings, flexible spending, HRA, lifestyle spending, dependent care, commuter or COBRA account overview for the employer that administers your benefits through Igoe Administrative Services.",
+  },
+  {
+    question: "How do I retrieve a forgotten username?",
+    answer:
+      "Select Let us help beneath the UserId field. The username retrieval page on the Igoe Administrative Services portal walks you through identity verification so you can recover your UserId.",
+  },
+  {
+    question: "How do I reset a forgotten password?",
+    answer:
+      "Select Let us help beneath the Password field to open the Forgot Password page on the Igoe Administrative Services portal. Follow the prompts to verify your identity and create a new password.",
+  },
+  {
+    question: "How do I register for a new Goigoe Wealthcare account?",
+    answer:
+      "Select Register to start new-participant enrollment. Registration opens the portal Registration page, where you enter the account details your employer or benefits administrator provided.",
+  },
+  {
+    question: "How do I use my benefits debit card or add it to a mobile wallet?",
+    answer:
+      "After you sign in, open Cards in the Igoe mobile app to manage your benefit debit card. Eligible cards can be added to Apple Pay or Google Pay from the app so you can pay qualified expenses without carrying the physical card.",
+  },
+  {
+    question: "Who do I contact for help with my spending account?",
+    answer:
+      "Call participant services at (800) 633-8818, option 1. The automated system is available 24/7; live agents are available Monday through Friday, 5:00 a.m. to 5:00 p.m. Pacific. You can also use Contact Us in the footer or email flex@goigoe.com for spending-account questions.",
+  },
+] as const
+
+const DOMAIN_SERVICES = [
+  "Health savings account (HSA) balances, contributions, investments and transaction history (WealthCare Saver custodian)",
+  "Flexible spending account (FSA) and dependent care (DCA) reimbursement claims with receipt upload and printable claim forms",
+  "Health reimbursement arrangement (HRA) and lifestyle spending account (LSA) balances when offered by your employer",
+  "Commuter transit and parking benefits, benefits debit card management, and Apple Pay / Google Pay mobile wallet enrollment",
+  "COBRA and direct premium billing accounts, statements, tax forms and communication preferences",
+] as const
+
+const CRAWLER_JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_HOMEPAGE_CANONICAL },
+        { "@type": "ListItem", position: 2, name: "Sign In", item: SITE_HOMEPAGE_CANONICAL },
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQS.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
+    },
+  ],
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <SeoHead />
+    <SeoJsonLd />
+  </head>
+  <body class="font-sans antialiased">
+    <div class="min-h-screen flex flex-col bg-white">
+      <header class="border-b border-gray-200 px-6 py-4">
+        <div class="flex items-center">
+          <a href="/" class="flex items-center shrink-0" aria-label={`${SITE_DISPLAY_NAME} home`}>
+            <img
+              src={BRAND_LOGO_SRC}
+              alt={`${SITE_DISPLAY_NAME} logo`}
+              width="140"
+              height="32"
+              class="h-8 w-auto"
+              fetchpriority="high"
+            />
+          </a>
+        </div>
+      </header>
+
+      <main class="flex-1 flex flex-col min-[1200px]:items-center">
+        <div class="w-full px-[10px] pt-4 md:pt-10 pb-8 min-[769px]:px-4 min-[1200px]:max-w-[1180px] min-[1200px]:mx-auto min-[1440px]:max-w-[1280px] min-[1440px]:px-[50px]">
+          <nav aria-label="Breadcrumb" class="mb-4 text-sm text-gray-600 w-full min-[769px]:w-[calc(39%-27px)] min-[769px]:ml-[27px]">
+            <ol class="flex flex-wrap gap-1">
+              <li>
+                <a href="/" class="text-blue-600">Home</a>
+                <span aria-hidden="true"> › </span>
+              </li>
+              <li aria-current="page">Sign In</li>
+            </ol>
+          </nav>
+
+          <div class="w-full min-[769px]:w-[calc(39%-27px)] min-[769px]:ml-[27px]">
+            <div class="flex justify-center mb-4">
+              <div class="w-12 h-12 border-2 border-gray-400 flex items-center justify-center" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+            </div>
+
+            <p class="text-center text-gray-600 text-sm mb-4 leading-relaxed">
+              We will maintain the confidentiality of your personal information in
+              accordance with our privacy policy.
+            </p>
+
+            <h1 class="text-center text-gray-800 text-2xl font-medium mb-5 tracking-tight">
+              {PAGE_H1_HEADING}
+            </h1>
+
+            <form aria-label="Account login" class="space-y-4">
+              <div class="space-y-1">
+                <label for="crawler-userId" class="block text-sm font-medium text-gray-700">
+                  UserId <span class="text-orange-500">*</span>
+                </label>
+                <input
+                  id="crawler-userId"
+                  type="text"
+                  readonly
+                  aria-disabled="true"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
+                />
+                <p class="text-sm mt-1">
+                  <span class="text-gray-600">Forgot your Username? </span>
+                  <a href={FORGOT_USERNAME_URL} class="text-blue-600">Let us help</a>
+                </p>
+              </div>
+
+              <div class="space-y-1">
+                <label for="crawler-password" class="block text-sm font-medium text-gray-700">
+                  Password <span class="text-orange-500">*</span>
+                </label>
+                <input
+                  id="crawler-password"
+                  type="password"
+                  readonly
+                  aria-disabled="true"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
+                />
+                <p class="text-sm mt-1">
+                  <span class="text-gray-600">Forgot your Password? </span>
+                  <a href={FORGOT_PASSWORD_URL} class="text-blue-600">Let us help</a>
+                </p>
+              </div>
+
+              <div class="flex justify-center md:justify-start">
+                <button
+                  type="button"
+                  aria-disabled="true"
+                  disabled
+                  class="inline-flex items-center justify-center min-h-[44px] px-4 py-[5px] text-[17px] font-light uppercase min-w-[120px] rounded-md text-white cursor-not-allowed"
+                  style="background-color:#010147;color:#ffffff;"
+                >
+                  Sign in
+                </button>
+              </div>
+
+              <div class="pt-4">
+                <p class="text-gray-600 mb-2 text-sm text-left">Don't have an account?</p>
+                <div class="flex justify-center md:justify-start">
+                  <a
+                    href={REGISTRATION_URL}
+                    class="inline-flex items-center justify-center min-h-[44px] px-4 py-[5px] text-[17px] font-light uppercase min-w-[120px] rounded-md text-white"
+                    style="background-color:#010147;color:#ffffff;"
+                    aria-label="Register for a new Goigoe Wealthcare account"
+                  >
+                    Register
+                  </a>
+                </div>
+              </div>
+            </form>
+
+            <section class="mt-10 w-full border-t border-neutral-200 pt-6 text-sm leading-relaxed text-neutral-700">
+              <h2 class="text-lg font-medium text-gray-800 mb-2">Portal Overview</h2>
+              <p class="mb-3">
+                {SITE_DISPLAY_NAME} is the member sign-in portal for consumer-directed healthcare
+                and tax-advantaged spending accounts administered for your employer by Igoe
+                Administrative Services. Igoe was founded in 1977 by Mike Igoe, incorporated in
+                1979, and remains an employee-owned benefits administrator based in San Diego,
+                California, with service coverage across all 50 states. The portal gives participants
+                one secure place to review account balances, submit reimbursement claims, manage
+                benefit debit cards, enroll cards in a mobile wallet, and update personal profile
+                and communication settings.
+              </p>
+              <p class="mb-3">
+                Igoe administers Health Savings Accounts (HSA) with WealthCare Saver as custodian,
+                Flexible Spending Accounts (FSA), Health Reimbursement Arrangements (HRA), Lifestyle
+                Spending Accounts (LSA), Dependent Care Assistance (DCA), Commuter transit and
+                parking benefits, plus COBRA and direct premium billing. Sign-in works in any current
+                desktop or mobile browser. Keep your UserId and password private, and sign out when
+                you use a shared computer.
+              </p>
+              <p>
+                New participants register with the account details their employer or benefits
+                administrator provided. Existing participants who need credential help use the Let
+                us help links on this page or call participant services at the number listed under
+                Member Support.
+              </p>
+            </section>
+
+            <section class="mt-6 w-full text-sm leading-relaxed text-neutral-700">
+              <h2 class="text-lg font-medium text-gray-800 mb-2">Domain Services Highlights</h2>
+              <p class="mb-2">
+                Participants who sign in can use the following benefit services:
+              </p>
+              <ul class="list-disc pl-5 space-y-1">
+                {DOMAIN_SERVICES.map((service) => (
+                  <li>{service}</li>
+                ))}
+              </ul>
+              <p class="mt-3">
+                Beneficiary information, benefit enrollment elections and investment account transfers
+                appear in the portal when they apply to your plan. Eligible expense guidance and claim
+                forms are available after authentication for FSA, HRA, LSA and dependent care plans.
+              </p>
+            </section>
+
+            <section class="mt-6 w-full text-sm leading-relaxed text-neutral-700">
+              <h2 class="text-lg font-medium text-gray-800 mb-2">Member Support</h2>
+              <p class="mb-3">
+                Use Let us help beneath the UserId field to recover a forgotten username, and Let us help
+                beneath the Password field to reset a forgotten password. New participants start
+                enrollment from the Register link. For live help with a spending account, call{" "}
+                <a href={PARTICIPANT_SUPPORT_TEL} class="text-blue-600">(800) 633-8818</a>
+                , option 1 (IVR 24/7; live agents Monday–Friday 5:00 a.m.–5:00 p.m. Pacific), or use
+                Contact Us in the footer. COBRA and premium-billing participants use option 2 during
+                weekday business hours. The Site Map lists every portal section.
+              </p>
+            </section>
+
+            <section class="mt-6 w-full text-sm text-neutral-700">
+              <h2 class="text-lg font-medium text-gray-800 mb-3">Frequently Asked Questions</h2>
+              <div class="space-y-2">
+                {FAQS.map((faq) => (
+                  <details class="border border-neutral-200 px-4 py-3">
+                    <summary class="cursor-pointer font-medium text-gray-800 min-h-[44px] flex items-center">
+                      {faq.question}
+                    </summary>
+                    <p class="mt-2 leading-relaxed">{faq.answer}</p>
+                  </details>
+                ))}
+              </div>
+            </section>
+
+            <script type="application/ld+json" set:html={JSON.stringify(CRAWLER_JSON_LD)} />
+
+            {visibleKeywords.length > 0 ? (
+              <section class="mt-8 w-full border-t border-neutral-200 pt-6" aria-label="Related searches">
+                <p class="text-sm leading-relaxed text-neutral-600">
+                  Related searches: {visibleKeywords}
+                </p>
+              </section>
+            ) : null}
+          </div>
+        </div>
+      </main>
+
+      <footer class="bg-gray-300 py-6 px-6 mt-auto">
+        <div class="max-w-7xl mx-auto">
+          <nav class="flex flex-wrap items-center justify-center gap-6 mb-3 text-sm">
+            <a href={FOOTER.contact} class="text-gray-700 hover:text-gray-900">CONTACT US</a>
+            <a href={FOOTER.about} class="text-gray-700 hover:text-gray-900">ABOUT US</a>
+            <a href={FOOTER.terms} class="text-gray-700 hover:text-gray-900">TERMS OF USE</a>
+            <a href={FOOTER.privacy} class="text-gray-700 hover:text-gray-900">PRIVACY POLICY</a>
+            <a href={PARTICIPANT_SUPPORT_TEL} class="text-gray-700 hover:text-gray-900" aria-label="Call Igoe participant services at 800-633-8818">(800) 633-8818</a>
+          </nav>
+          <p class="text-center text-sm text-gray-600 mb-2">
+            Copyright © 2024 Igoe Administrative Services. All Rights Reserved.
+          </p>
+          <p class="text-center">
+            <a href={FOOTER.siteMap} class="text-sm text-gray-700 hover:text-gray-900 underline">SITE MAP</a>
+          </p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,5 +1,8 @@
 import { CANONICAL_HOST, DEFAULT_SITE_TITLE, SITE_DISPLAY_NAME } from "@/lib/site-url"
 
+/** Brand-first H1 for crawler twin / site-name consensus (audit-crawler-seo). */
+export const PAGE_H1_HEADING = SITE_DISPLAY_NAME
+
 function mergeKeywords(...lists: Array<readonly string[]>): string[] {
   const seen = new Set<string>()
   const result: string[] = []
@@ -329,6 +332,57 @@ const HARVEST_SUGGEST_KEYWORDS = [
   "igoe login benefits",
 ] as const
 
+/**
+ * Step 5 FULL RERUN 2026-10-27 — append-only deepening.
+ * OBSERVED on goigoe.com Spending Accounts / Contact / Mobile Wallet and
+ * live harvest (`seo-intelligence.json`). Rejected off-brand `google login`.
+ * LSA / HRA / DCA / Commuter now verified on corporate site (prior run rejected
+ * `igoe lsa login` as unverified — reinstated with evidence).
+ */
+const RERUN_ENTITY_HARVEST_KEYWORDS = [
+  "igoe benefits login",
+  "igoe account login",
+  "igoe wealthcare",
+  "igoe lifestyle spending account",
+  "igoe lsa login",
+  "igoe hra login",
+  "igoe hra portal",
+  "igoe dependent care login",
+  "igoe dependent care fsa",
+  "igoe DCA login",
+  "igoe commuter benefits login",
+  "igoe transit benefits login",
+  "igoe parking benefits login",
+  "igoe mobile wallet",
+  "igoe apple pay benefits card",
+  "igoe google pay benefits card",
+  "igoe participant services phone",
+  "igoe flex department",
+  "igoe spending account participants",
+  "WealthCare Saver custodian",
+  "Igoe WealthCare Saver custodian",
+  "Igoe Administrative Services San Diego CA",
+  "Igoe employee owned benefits",
+  "Goigoe HRA login",
+  "Goigoe LSA login",
+  "Goigoe dependent care login",
+  "Goigoe commuter benefits",
+  "Goigoe mobile wallet",
+  "Goigoe benefits card Apple Pay",
+] as const
+
+/**
+ * Astro Hybrid conversion 2026-10-27 — append-only.
+ * Navigational twins for static crawler twin title/H1 survival (Member Sign In).
+ */
+const ASTRO_HYBRID_KEYWORDS = [
+  "Goigoe Wealthcare member sign in",
+  "Igoe member sign in",
+  "Goigoe Wealthcare sign in page",
+  "Igoe Administrative Services member sign in",
+  "goigoe wealthcare portal sign in",
+] as const
+
 export function buildSiteKeywords(): string[] {
   return mergeKeywords(
     BRAND_SLUG_LADDER,
@@ -343,5 +397,7 @@ export function buildSiteKeywords(): string[] {
     PARTICIPANT_APP_KEYWORDS,
     PROBLEM_HOWTO_KEYWORDS,
     HARVEST_SUGGEST_KEYWORDS,
+    RERUN_ENTITY_HARVEST_KEYWORDS,
+    ASTRO_HYBRID_KEYWORDS,
   )
 }

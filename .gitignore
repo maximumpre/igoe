@@ -45,3 +45,10 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+# Astro Hybrid (pre-built into public/ at build time)
+/dist-astro/
+/.astro/
+/public/index.html
+/public/crawler-seo.html
+/public/_astro/
